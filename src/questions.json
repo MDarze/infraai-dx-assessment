@@ -1,0 +1,836 @@
+[
+  {
+    "id": "A1_inflow",
+    "axis": "Process",
+    "role": "All",
+    "type": "single",
+    "text": "كيف يدخل المشروع للشركة غالباً؟",
+    "options": [
+      {
+        "key": "gov_tender",
+        "label": "مناقصة حكومية",
+        "labelEn": "Government tender"
+      },
+      {
+        "key": "direct_client",
+        "label": "عميل مباشر",
+        "labelEn": "Direct client"
+      },
+      {
+        "key": "main_contractor",
+        "label": "مقاول رئيسي (Subcontract)",
+        "labelEn": "Subcontract"
+      },
+      {
+        "key": "relationships",
+        "label": "علاقات/ترشيحات",
+        "labelEn": "Referrals/relationships"
+      }
+    ],
+    "tags": [
+      "lifecycle"
+    ],
+    "textEn": "How does the project usually enter the company?",
+    "helpEn": null
+  },
+  {
+    "id": "A2_kickoff",
+    "axis": "Process",
+    "role": "Manager",
+    "type": "single",
+    "text": "هل يوجد Kickoff Process موثق وثابت لكل مشروع؟",
+    "options": [
+      {
+        "key": "yes_template",
+        "label": "نعم (Template ثابت)",
+        "score": 5,
+        "labelEn": "Yes (standard template)"
+      },
+      {
+        "key": "sometimes",
+        "label": "أحياناً",
+        "score": 3,
+        "labelEn": "Sometimes"
+      },
+      {
+        "key": "no",
+        "label": "لا",
+        "score": 1,
+        "labelEn": "No"
+      }
+    ],
+    "tags": [
+      "process",
+      "standardization"
+    ],
+    "textEn": "Do you have a documented, consistent kickoff process for every project?",
+    "helpEn": null
+  },
+  {
+    "id": "A3_planning_tools",
+    "axis": "Process",
+    "role": "Manager",
+    "type": "multi",
+    "text": "ما الأدوات المستخدمة للتخطيط (Schedule/Resources/Scope)؟ (اختيارات متعددة)",
+    "options": [
+      {
+        "key": "primavera",
+        "label": "Primavera / MS Project",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "excel",
+        "label": "Excel",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "paper",
+        "label": "ورقي/يدوي",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "erp",
+        "label": "ERP/PM System",
+        "score": 4,
+        "labelEn": null
+      },
+      {
+        "key": "none",
+        "label": "لا يوجد تخطيط واضح",
+        "score": 0,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "planning",
+      "tools"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "A4_handover",
+    "axis": "Process",
+    "role": "Operations",
+    "type": "single",
+    "text": "كيف يتم إغلاق المشروع والتسليم؟",
+    "options": [
+      {
+        "key": "checklist",
+        "label": "Checklist + مستندات موحدة",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "mixed",
+        "label": "جزئياً (حسب المشروع)",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "ad_hoc",
+        "label": "اجتهادات/ملفات متفرقة",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "handover",
+      "docs"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "B1_daily_updates",
+    "axis": "DailyOps",
+    "role": "Engineer",
+    "type": "single",
+    "text": "كيف يتم التحديث اليومي من الموقع للإدارة؟",
+    "options": [
+      {
+        "key": "whatsapp",
+        "label": "واتس اب",
+        "score": 2,
+        "labelEn": "WhatsApp"
+      },
+      {
+        "key": "calls",
+        "label": "مكالمات",
+        "score": 2,
+        "labelEn": "Phone calls"
+      },
+      {
+        "key": "excel",
+        "label": "Excel/Google Sheets",
+        "score": 3,
+        "labelEn": "Excel/Sheets"
+      },
+      {
+        "key": "system",
+        "label": "نظام/تطبيق",
+        "score": 5,
+        "labelEn": "System/App"
+      }
+    ],
+    "tags": [
+      "whatsapp",
+      "reporting"
+    ],
+    "textEn": "How are daily site updates shared with management?",
+    "helpEn": null
+  },
+  {
+    "id": "B2_duplicate_entry",
+    "axis": "DailyOps",
+    "role": "Engineer",
+    "type": "single",
+    "text": "كم مرة تُدخل نفس المعلومة يومياً (صور/كميات/ملاحظات) في أكثر من مكان؟",
+    "options": [
+      {
+        "key": "once",
+        "label": "مرة واحدة",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "2_3",
+        "label": "2–3 مرات",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "5plus",
+        "label": "أكثر من 5 مرات",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "rework",
+      "data"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "B3_report_time_hours",
+    "axis": "DailyOps",
+    "role": "Engineer",
+    "type": "number",
+    "text": "كم ساعة تقريباً يقضيها مهندس الموقع يومياً في (كتابة تقارير/تجميع معلومات/إرسال تحديثات)؟",
+    "help": "اكتب رقم تقريبي (مثلاً 2.5).",
+    "tags": [
+      "time",
+      "reporting"
+    ],
+    "textEn": "How many hours per day does the site engineer spend on reporting/collecting updates?",
+    "helpEn": "Enter a rough number (e.g., 2.5)."
+  },
+  {
+    "id": "B4_internet",
+    "axis": "DailyOps",
+    "role": "Engineer",
+    "type": "single",
+    "text": "عند انقطاع الإنترنت في الموقع… ماذا يحدث عادة؟",
+    "options": [
+      {
+        "key": "stops",
+        "label": "يتوقف جزء كبير من العمل",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "paper_then_sync",
+        "label": "نستمر يدوياً ثم ننقل لاحقاً",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "offline_system",
+        "label": "نستمر بشكل طبيعي (Offline)",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "offline",
+      "field"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "C1_data_path",
+    "axis": "Data",
+    "role": "All",
+    "type": "single",
+    "text": "مسار البيانات الأكثر شيوعاً (تقرير يومي/صورة/كمية)…",
+    "options": [
+      {
+        "key": "whatsapp_excel",
+        "label": "موقع → واتس → Excel → إدارة",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "excel_only",
+        "label": "موقع → Excel/Sheets → إدارة",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "system",
+        "label": "موقع → نظام موحد → Dashboard",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "unclear",
+        "label": "لا يوجد مسار واضح",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "dataflow",
+      "whatsapp"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "C2_versions",
+    "axis": "Data",
+    "role": "All",
+    "type": "single",
+    "text": "كم نسخة من نفس البيانات موجودة (ملفات مختلفة/شاتات/نسخ إكسل)؟",
+    "options": [
+      {
+        "key": "one",
+        "label": "نسخة واحدة",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "2_3",
+        "label": "2–3 نسخ",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "5plus",
+        "label": "أكثر من 5 نسخ",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "single_source",
+      "data"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "C3_data_conflicts",
+    "axis": "Data",
+    "role": "Manager",
+    "type": "single",
+    "text": "هل يحدث تعارض بالأرقام بين الموقع والمالية/الإدارة؟",
+    "options": [
+      {
+        "key": "often",
+        "label": "كثيراً",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "sometimes",
+        "label": "أحياناً",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "rare",
+        "label": "نادراً",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "conflict",
+      "finance"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "D1_cost_tracking",
+    "axis": "Finance",
+    "role": "Finance",
+    "type": "single",
+    "text": "كيف تتم متابعة التكلفة في المشروع؟",
+    "options": [
+      {
+        "key": "paper",
+        "label": "ورقي/يدوي",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "excel",
+        "label": "Excel",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "erp",
+        "label": "نظام مالي/ERP",
+        "score": 4,
+        "labelEn": null
+      },
+      {
+        "key": "integrated",
+        "label": "نظام + ربط بتقدم التنفيذ",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "cost",
+      "tracking"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "D2_variance_detect",
+    "axis": "Finance",
+    "role": "Finance",
+    "type": "single",
+    "text": "متى يتم اكتشاف الانحراف المالي عادةً؟",
+    "options": [
+      {
+        "key": "end",
+        "label": "في نهاية المشروع",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "monthly",
+        "label": "شهرياً",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "weekly",
+        "label": "أسبوعياً",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "daily",
+        "label": "يومياً",
+        "score": 4,
+        "labelEn": null
+      },
+      {
+        "key": "realtime",
+        "label": "لحظياً",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "variance",
+      "visibility"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "D3_billing_cycle",
+    "axis": "Finance",
+    "role": "Finance",
+    "type": "single",
+    "text": "دورة الفوترة/المستخلصات تتم…",
+    "options": [
+      {
+        "key": "manual_docs",
+        "label": "يدوياً + مستندات متفرقة",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "semi",
+        "label": "جزئياً (نماذج ثابتة)",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "system",
+        "label": "عبر نظام موحد",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "billing",
+      "docs"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "D4_cost_hour_sar",
+    "axis": "Finance",
+    "role": "Finance",
+    "type": "number",
+    "text": "متوسط تكلفة ساعة العمل (SAR) لمن يقوم بالتقارير والمتابعة (تقديري)؟",
+    "help": "مثال: 80",
+    "tags": [
+      "roi",
+      "assumptions"
+    ],
+    "textEn": "Average hourly cost (SAR) for staff doing reporting/follow-up (estimate)?",
+    "helpEn": "Example: 80"
+  },
+  {
+    "id": "E1_gov_docs_time_days",
+    "axis": "Governance",
+    "role": "Operations",
+    "type": "single",
+    "text": "عند طلب مستند حكومي/عميل (اعتماد/محضر/مطابقة)… كم يستغرق تجهيزه غالباً؟",
+    "options": [
+      {
+        "key": "same_day",
+        "label": "نفس اليوم",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "1_2",
+        "label": "1–2 يوم",
+        "score": 4,
+        "labelEn": null
+      },
+      {
+        "key": "3_5",
+        "label": "3–5 أيام",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "week_plus",
+        "label": "أكثر من أسبوع",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "compliance",
+      "docs"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "E2_zakat_process",
+    "axis": "Governance",
+    "role": "Finance",
+    "type": "single",
+    "text": "تجهيز متطلبات الزكاة/الضريبة يتم عبر…",
+    "options": [
+      {
+        "key": "erp_reports",
+        "label": "تقارير نظام/ERP",
+        "score": 5,
+        "labelEn": "ERP/system reports"
+      },
+      {
+        "key": "excel_manual",
+        "label": "Excel وتجميع يدوي",
+        "score": 2,
+        "labelEn": "Excel/manual compilation"
+      },
+      {
+        "key": "external_accountant",
+        "label": "محاسب خارجي + ملفات",
+        "score": 3,
+        "labelEn": "External accountant + files"
+      },
+      {
+        "key": "unclear",
+        "label": "غير واضح/حسب الحالة",
+        "score": 1,
+        "labelEn": "Unclear / case-by-case"
+      }
+    ],
+    "tags": [
+      "zakat",
+      "tax"
+    ],
+    "textEn": "How do you prepare Zakat/Tax requirements?",
+    "helpEn": null
+  },
+  {
+    "id": "E3_audit_issues",
+    "axis": "Governance",
+    "role": "Finance",
+    "type": "single",
+    "text": "هل حدثت مشكلات بسبب مستندات ناقصة/تضارب أثناء تدقيق/مطالبة؟",
+    "options": [
+      {
+        "key": "yes",
+        "label": "نعم",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "sometimes",
+        "label": "أحياناً",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "no",
+        "label": "لا",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "audit",
+      "risk"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "F1_first_knows",
+    "axis": "Decision",
+    "role": "All",
+    "type": "single",
+    "text": "عندما تحدث مشكلة بالموقع (تأخير/تعطل)… من يعرف أولاً غالباً؟",
+    "options": [
+      {
+        "key": "engineer",
+        "label": "المهندس",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "pm",
+        "label": "مدير المشروع",
+        "score": 4,
+        "labelEn": null
+      },
+      {
+        "key": "management",
+        "label": "الإدارة",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "finance",
+        "label": "المالية",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "incident",
+      "decision"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "F2_decision_latency",
+    "axis": "Decision",
+    "role": "Manager",
+    "type": "single",
+    "text": "كم يستغرق اتخاذ قرار علاجي عادةً بعد ظهور المشكلة؟",
+    "options": [
+      {
+        "key": "same_day",
+        "label": "نفس اليوم",
+        "score": 5,
+        "labelEn": "Same day"
+      },
+      {
+        "key": "1_2",
+        "label": "1–2 يوم",
+        "score": 4,
+        "labelEn": "1–2 days"
+      },
+      {
+        "key": "3plus",
+        "label": "أكثر من 3 أيام",
+        "score": 2,
+        "labelEn": "3+ days"
+      }
+    ],
+    "tags": [
+      "latency",
+      "decision"
+    ],
+    "textEn": "How long does it usually take to take a corrective decision after an issue appears?",
+    "helpEn": null
+  },
+  {
+    "id": "F3_single_point_failure",
+    "axis": "Decision",
+    "role": "Manager",
+    "type": "single",
+    "text": "لو غاب شخص أساسي أسبوع… ماذا يتعطل أكثر شيء؟",
+    "options": [
+      {
+        "key": "reports",
+        "label": "التقارير والمتابعة",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "finance",
+        "label": "الفوترة/المالية",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "site_ops",
+        "label": "تشغيل الموقع",
+        "score": 2,
+        "labelEn": null
+      },
+      {
+        "key": "nothing",
+        "label": "لا شيء (الإجراءات واضحة)",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "dependency",
+      "risk"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "G1_workflow_automation",
+    "axis": "Automation",
+    "role": "Manager",
+    "type": "single",
+    "text": "مستوى الأتمتة في طلبات الموافقات (مواد/مستخلص/تغيير)…",
+    "options": [
+      {
+        "key": "manual",
+        "label": "يدوي/واتس/مكالمات",
+        "score": 1,
+        "labelEn": null
+      },
+      {
+        "key": "semi",
+        "label": "نصف رقمي (نماذج/إكسل)",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "system",
+        "label": "نظام Workflow",
+        "score": 5,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "workflow",
+      "automation"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "G2_ai_familiarity",
+    "axis": "AIReadiness",
+    "role": "All",
+    "type": "single",
+    "text": "مدى تقبل الفريق لاستخدام أدوات ذكاء اصطناعي (تلخيص تقارير/كشف انحرافات)…",
+    "options": [
+      {
+        "key": "high",
+        "label": "عالي",
+        "score": 5,
+        "labelEn": "High"
+      },
+      {
+        "key": "medium",
+        "label": "متوسط",
+        "score": 3,
+        "labelEn": "Medium"
+      },
+      {
+        "key": "low",
+        "label": "ضعيف/مقاومة",
+        "score": 1,
+        "labelEn": "Low / resistant"
+      }
+    ],
+    "tags": [
+      "change",
+      "ai"
+    ],
+    "textEn": "Team openness to using AI tools (summaries/variance detection, etc.)?",
+    "helpEn": null
+  },
+  {
+    "id": "G3_ai_data_quality",
+    "axis": "AIReadiness",
+    "role": "Manager",
+    "type": "single",
+    "text": "جودة البيانات الحالية (هل يمكن الاعتماد عليها للتحليل)؟",
+    "options": [
+      {
+        "key": "good",
+        "label": "جيدة",
+        "score": 5,
+        "labelEn": null
+      },
+      {
+        "key": "mixed",
+        "label": "متوسطة/تحتاج تنظيف",
+        "score": 3,
+        "labelEn": null
+      },
+      {
+        "key": "poor",
+        "label": "ضعيفة/متضاربة",
+        "score": 1,
+        "labelEn": null
+      }
+    ],
+    "tags": [
+      "data",
+      "ai"
+    ],
+    "textEn": null,
+    "helpEn": null
+  },
+  {
+    "id": "H1_examples",
+    "axis": "Process",
+    "role": "All",
+    "type": "text",
+    "text": "اذكر مثالاً حقيقياً (آخر أسبوعين) لمشكلة سببها تأخر معلومة أو تضارب بيانات.",
+    "help": "اكتب مثال مختصر: ماذا حدث؟ وما أثره؟",
+    "tags": [
+      "evidence"
+    ],
+    "textEn": null,
+    "helpEn": null
+  }
+]
