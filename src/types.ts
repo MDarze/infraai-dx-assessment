@@ -13,10 +13,10 @@ export type Axis =
 export type QuestionType = "single" | "multi" | "number" | "text";
 
 export interface OptionDef {
-  key: string;              // stored value
-  label: string;            // shown to user (AR)
-  labelEn?: string;         // shown to user (EN)
-  score?: number;           // optional direct scoring (override scoringMap)
+  key: string;
+  label: string;
+  labelEn?: string;
+  score?: number;
 }
 
 export interface QuestionDef {
@@ -24,14 +24,14 @@ export interface QuestionDef {
   axis: Axis;
   role: Role | "All";
   type: QuestionType;
-  text: string;             // AR
-  textEn?: string;          // EN
-  help?: string;            // AR
-  helpEn?: string;          // EN
-  weight?: number;          // default 1
-  options?: OptionDef[];    // for single/multi
-  scoringMap?: Record<string, number>; // value -> score
-  tags?: string[];          // e.g. ["whatsapp","reporting","compliance"]
+  text: string;
+  textEn?: string;
+  help?: string;
+  helpEn?: string;
+  weight?: number;
+  options?: OptionDef[];
+  scoringMap?: Record<string, number>;
+  tags?: string[];
 }
 
 export interface AssessmentMeta {
@@ -39,14 +39,16 @@ export interface AssessmentMeta {
   projectName?: string;
   companySize: "lt50" | "50to200" | "gt200";
   assessorName: string;
-  createdAt: string; // ISO
+  contactEmail?: string;
+  city?: string;
+  createdAt: string;
 }
 
 export interface ROISettings {
-  engineersCount: number;      // used for time calculations
-  workingDaysPerWeek: number;  // 5 by default
-  timeSavingRate: number;      // 0.25 default (25%)
-  avgHourCostSar: number | null; // optional override; if null use finance answer
+  engineersCount: number;
+  workingDaysPerWeek: number;
+  timeSavingRate: number;
+  avgHourCostSar: number | null;
 }
 
 export type AnswerValue = string | number | string[] | null;
@@ -60,7 +62,7 @@ export interface Respondent {
 
 export interface AssessmentState {
   meta: AssessmentMeta;
-  respondents: Respondent[];     // bundle: multiple roles
-  activeRespondentId: string;    // currently answering for this role
+  respondents: Respondent[];
+  activeRespondentId: string;
   roi: ROISettings;
 }
