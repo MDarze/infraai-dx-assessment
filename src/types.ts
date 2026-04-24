@@ -60,9 +60,19 @@ export interface Respondent {
   answers: Record<string, AnswerValue>;
 }
 
+export type SyncStatus = "idle" | "pending" | "ok" | "error";
+
+export interface SyncInfo {
+  status: SyncStatus;
+  assessmentId?: string;
+  error?: string;
+  syncedAt?: string;
+}
+
 export interface AssessmentState {
   meta: AssessmentMeta;
   respondents: Respondent[];
   activeRespondentId: string;
   roi: ROISettings;
+  sync?: SyncInfo;
 }

@@ -3,6 +3,7 @@ import questionsData from "./questions.json";
 import { analyze } from "./analysis";
 import { AssessmentState, QuestionDef, Role, AnswerValue, Respondent } from "./types";
 import { clearState, loadState, saveState } from "./storage";
+import { hasBackend, syncToBackend } from "./api";
 
 const ROLES: { key: Role; labelAr: string; labelEn: string }[] = [
   { key: "Manager", labelAr: "مدير", labelEn: "Manager" },
@@ -79,6 +80,40 @@ export default function App() {
     setStep("start");
   };
 
+  const syncNow = async (current: AssessmentState) => {
+    if (!hasBackend()) return;
+    if (current.sync?.status === "ok" && current.sync.assessmentId) return;
+    const pending: AssessmentState = { ...current, sync: { status: "pending" } };
+    persist(pending);
+    try {
+      const assessmentId = await syncToBackend({
+        meta: {
+          clientName: current.meta.clientName,
+          companySize: current.meta.companySize,
+          assessorName: current.meta.assessorName,
+          contactEmail: current.meta.contactEmail,
+          city: current.meta.city,
+        },
+        respondents: current.respondents.map(r => ({ role: r.role, answers: r.answers as Record<string, unknown> })),
+        roi: {
+          engineersCount: current.roi.engineersCount,
+          workingDaysPerWeek: current.roi.workingDaysPerWeek,
+          timeSavingRate: current.roi.timeSavingRate,
+          avgHourCostSar: current.roi.avgHourCostSar,
+        },
+      });
+      persist({ ...pending, sync: { status: "ok", assessmentId, syncedAt: new Date().toISOString() } });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      persist({ ...pending, sync: { status: "error", error: msg } });
+    }
+  };
+
+  const finishSurvey = () => {
+    setStep("result");
+    void syncNow(state);
+  };
+
   return (
     <div className="min-h-screen">
       <Header
@@ -113,7 +148,7 @@ export default function App() {
             onSwitchRespondent={switchRespondent}
             onAnswer={setAnswer}
             onBack={() => setStep("start")}
-            onDone={() => setStep("result")}
+            onDone={finishSurvey}
           />
         )}
 
@@ -123,6 +158,7 @@ export default function App() {
             result={result}
             onBack={() => setStep("survey")}
             onExportPdf={() => exportPdf(state, result)}
+            onRetrySync={() => syncNow(state)}
           />
         )}
       </div>
@@ -363,9 +399,42 @@ function Survey({
   );
 }
 
-function Results({ state, result, onBack, onExportPdf }: any) {
+function Results({ state, result, onBack, onExportPdf, onRetrySync }: any) {
+  const sync = state.sync;
   return (
     <div className="space-y-4">
+      {hasBackend() && (
+        <Card title="حفظ في قاعدة البيانات • Database sync">
+          {sync?.status === "pending" && (
+            <div className="text-sm text-slate-300">... جاري الحفظ • Saving</div>
+          )}
+          {sync?.status === "ok" && (
+            <div className="text-sm text-emerald-300">
+              تم الحفظ • Saved <span className="text-xs text-slate-400" dir="ltr">(id: {sync.assessmentId})</span>
+            </div>
+          )}
+          {sync?.status === "error" && (
+            <div className="space-y-2">
+              <div className="text-sm text-rose-300" dir="ltr">Save failed: {sync.error}</div>
+              <button
+                className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
+                onClick={onRetrySync}
+              >
+                إعادة المحاولة • Retry
+              </button>
+            </div>
+          )}
+          {!sync && (
+            <button
+              className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
+              onClick={onRetrySync}
+            >
+              حفظ الآن • Sync now
+            </button>
+          )}
+        </Card>
+      )}
+
       <Card title="ملخص العميل • Client Summary">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
           <div><span className="text-slate-400">العميل:</span> {state.meta.clientName}</div>
