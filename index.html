@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0B1220" />
     <title>InfraAI Field Assessment</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("infraai_theme");
+        var sys = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        var theme = saved === "light" || saved === "dark" ? saved : sys;
+        document.documentElement.setAttribute("data-theme", theme);
+        var locale = localStorage.getItem("infraai_locale") || "ar";
+        document.documentElement.setAttribute("lang", locale);
+        document.documentElement.setAttribute("dir", locale === "en" ? "ltr" : "rtl");
+      } catch (e) {}
+    })();
+  </script>
   </head>
   <body class="bg-slate-950 text-slate-100">
     <div id="root"></div>
