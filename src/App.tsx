@@ -80,9 +80,9 @@ export default function App() {
     setStep("start");
   };
 
-  const syncNow = async (current: AssessmentState) => {
+  const syncNow = async (current: AssessmentState, { force = false }: { force?: boolean } = {}) => {
     if (!hasBackend()) return;
-    if (current.sync?.status === "ok" && current.sync.assessmentId) return;
+    if (!force && current.sync?.status === "ok" && current.sync.assessmentId) return;
     const pending: AssessmentState = { ...current, sync: { status: "pending" } };
     persist(pending);
     try {
@@ -158,7 +158,7 @@ export default function App() {
             result={result}
             onBack={() => setStep("survey")}
             onExportPdf={() => exportPdf(state, result)}
-            onRetrySync={() => syncNow(state)}
+            onRetrySync={() => syncNow(state, { force: true })}
           />
         )}
       </div>
