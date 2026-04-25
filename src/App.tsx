@@ -9,10 +9,16 @@ import { Survey } from "./pages/Survey";
 import { Results, exportPdf } from "./pages/Results";
 import { Settings } from "./pages/Settings";
 import { AppHeader } from "./ui/AppHeader";
+import { useLocale } from "./i18n/useLocale";
 
 type Step = "start" | "survey" | "result" | "settings";
 
 export default function App() {
+  // Subscribe to locale at the root so the entire tree re-renders on toggle.
+  // Without this, t() calls in pages stay stale until the page re-renders for
+  // some other reason — manifests as "EN toggle doesn't change Start labels".
+  useLocale();
+
   const questions = questionsData as unknown as QuestionDef[];
   const persisted = loadState();
 
