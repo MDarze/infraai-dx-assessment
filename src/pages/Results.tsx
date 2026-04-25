@@ -5,6 +5,15 @@ export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any
   const sync = state.sync;
   return (
     <div className="space-y-4">
+      {!hasBackend() && (
+        <Card title="حفظ في قاعدة البيانات • Database sync">
+          <div className="text-sm text-amber-300">
+            Backend not configured — VITE_API_URL was empty at build time.
+            Set it in your Railway frontend service variables and trigger a fresh build.
+          </div>
+        </Card>
+      )}
+
       {hasBackend() && (
         <Card title="حفظ في قاعدة البيانات • Database sync">
           {sync?.status === "pending" && (

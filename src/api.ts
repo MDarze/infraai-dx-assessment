@@ -1,6 +1,12 @@
 const BASE = ((import.meta.env.VITE_API_URL as string | undefined) ?? "").replace(/\/$/, "");
 
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line no-console
+  console.info("[infraai] api base =", BASE || "(unset — VITE_API_URL was empty at build time)");
+}
+
 export const hasBackend = (): boolean => Boolean(BASE);
+export const apiBase = (): string => BASE;
 
 function mapSize(s: string): "<50" | "50-200" | "200+" {
   if (s === "lt50") return "<50";
