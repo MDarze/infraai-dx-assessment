@@ -69,6 +69,10 @@ export const en = {
   "results.actions.retry": "Retry",
 
   "start.field.contactEmail.invalid": "Invalid email format",
+  "start.field.contactPhone": "Phone number",
+  "start.field.contactPhone.invalid": "Invalid phone number (at least 8 digits)",
+  "start.field.commercialRegistration": "Commercial registration",
+  "start.field.commercialRegistration.hint": "Optional — used to distinguish the company",
 
   "settings.title": "ROI Settings",
   "settings.subtitle": "These settings only affect the estimated ROI, not scoring.",

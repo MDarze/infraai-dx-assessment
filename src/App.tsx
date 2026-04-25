@@ -90,6 +90,8 @@ export default function App() {
           companySize: current.meta.companySize,
           assessorName: current.meta.assessorName,
           contactEmail: current.meta.contactEmail,
+          contactPhone: current.meta.contactPhone,
+          commercialRegistration: current.meta.commercialRegistration,
           city: current.meta.city,
         },
         respondents: current.respondents.map(r => ({ role: r.role, answers: r.answers as Record<string, unknown> })),

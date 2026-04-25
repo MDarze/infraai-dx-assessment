@@ -12,6 +12,13 @@ const SIZE_OPTIONS = ["lt50", "50to200", "gt200"] as const;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmailValid = (s: string | undefined) => !s || EMAIL_RE.test(s);
 
+const PHONE_DIGITS_RE = /\d/g;
+const isPhoneValid = (s: string | undefined) => {
+  if (!s) return true;
+  const digits = (s.match(PHONE_DIGITS_RE) ?? []).length;
+  return digits >= 8;
+};
+
 interface Props {
   state: AssessmentState;
   onMeta: (patch: Partial<AssessmentState["meta"]>) => void;
@@ -28,12 +35,14 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
   const availableRoles = ALL_ROLES.filter((r) => !usedRoles.includes(r));
 
   const emailOk = isEmailValid(meta.contactEmail);
+  const phoneOk = isPhoneValid(meta.contactPhone);
 
   const canStart =
     !!meta.clientName &&
     !!meta.assessorName &&
     !!meta.companySize &&
     emailOk &&
+    phoneOk &&
     respondents.length > 0;
 
   return (
@@ -67,6 +76,13 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
             onChange={(e) => onMeta({ city: e.target.value })}
             placeholder="…"
           />
+          <Field
+            label={t("start.field.commercialRegistration")}
+            value={meta.commercialRegistration ?? ""}
+            onChange={(e) => onMeta({ commercialRegistration: e.target.value })}
+            placeholder="…"
+            hint={t("start.field.commercialRegistration.hint")}
+          />
         </div>
       </Card>
 
@@ -85,6 +101,14 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
             onChange={(e) => onMeta({ contactEmail: e.target.value })}
             placeholder="…"
             error={!emailOk ? t("start.field.contactEmail.invalid") : undefined}
+          />
+          <Field
+            label={t("start.field.contactPhone")}
+            type="tel"
+            value={meta.contactPhone ?? ""}
+            onChange={(e) => onMeta({ contactPhone: e.target.value })}
+            placeholder="+966 5X XXX XXXX"
+            error={!phoneOk ? t("start.field.contactPhone.invalid") : undefined}
           />
         </div>
       </Card>

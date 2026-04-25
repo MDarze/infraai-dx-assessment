@@ -1,64 +1,9 @@
 /**
- * Inline helper components and utilities shared by the page components.
- * These are preserved from the original App.tsx during the Phase 4 refactor.
- * They will be replaced by proper primitives in later phases.
+ * Shared helpers: question renderer + label translators.
+ * Card/Field/NumberField/Select primitives moved to src/ui/.
  */
-import React from "react";
 import { t } from "./i18n/t";
 import { useLocale } from "./i18n/useLocale";
-
-export function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950 p-4 shadow">
-      <div className="text-sm text-slate-300 mb-3">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-export function Field({ label, value, onChange, placeholder }: any) {
-  return (
-    <label className="text-sm">
-      <div className="text-xs text-slate-400 mb-1">{label}</div>
-      <input
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-      />
-    </label>
-  );
-}
-
-export function NumberField({ label, value, onChange, help }: any) {
-  return (
-    <label className="text-sm">
-      <div className="text-xs text-slate-400 mb-1">{label}</div>
-      <input
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400"
-        type="number"
-        value={value ?? 0}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-      {help && <div className="text-xs text-slate-500 mt-1">{help}</div>}
-    </label>
-  );
-}
-
-export function Select({ label, value, onChange, options }: any) {
-  return (
-    <label className="text-sm">
-      <div className="text-xs text-slate-400 mb-1">{label}</div>
-      <select
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        {options.map((o: any) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-    </label>
-  );
-}
 
 export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; onChange: (v: any) => void }) {
   const [locale] = useLocale();

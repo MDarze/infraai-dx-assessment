@@ -15,7 +15,7 @@ function mapSize(s: string): "<50" | "50-200" | "200+" {
 }
 
 export async function syncToBackend(state: {
-  meta: { clientName: string; companySize: string; assessorName: string; contactEmail?: string; city?: string };
+  meta: { clientName: string; companySize: string; assessorName: string; contactEmail?: string; contactPhone?: string; commercialRegistration?: string; city?: string };
   respondents: Array<{ role: string; answers: Record<string, unknown> }>;
   roi: { engineersCount: number; workingDaysPerWeek: number; timeSavingRate: number; avgHourCostSar: number | null };
 }): Promise<string> {
@@ -28,8 +28,8 @@ export async function syncToBackend(state: {
       city: state.meta.city || "N/A",
       contactName: state.meta.assessorName,
       contactEmail: state.meta.contactEmail || `field.${Date.now()}@infraai.local`,
-      contactPhone: `0000${Date.now().toString().slice(-7)}`,
-      emirateRegistration: `PENDING-${Date.now()}`,
+      contactPhone: state.meta.contactPhone?.trim() || `0000${Date.now().toString().slice(-7)}`,
+      emirateRegistration: state.meta.commercialRegistration?.trim() || `PENDING-${Date.now()}`,
       industry: "Construction",
     }),
   });

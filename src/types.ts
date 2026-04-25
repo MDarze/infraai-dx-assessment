@@ -40,6 +40,8 @@ export interface AssessmentMeta {
   companySize: "lt50" | "50to200" | "gt200";
   assessorName: string;
   contactEmail?: string;
+  contactPhone?: string;
+  commercialRegistration?: string;
   city?: string;
   createdAt: string;
 }

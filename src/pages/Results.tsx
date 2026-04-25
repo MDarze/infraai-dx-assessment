@@ -6,75 +6,138 @@ import { hasBackend } from "../api";
 import { t } from "../i18n/t";
 import { useLocale } from "../i18n/useLocale";
 
+const overallScore = (axisScores: Record<string, number>): number | null => {
+  const vals = Object.values(axisScores).filter((v) => v > 0);
+  if (!vals.length) return null;
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+  return Math.round(avg * 20);
+};
+
+const pickLocale = (s: string | undefined, ar: boolean): string => {
+  if (!s) return "";
+  const parts = s.split("|").map((p) => p.trim());
+  if (parts.length < 2) return s;
+  return ar ? (parts[1] || parts[0]) : (parts[0] || parts[1]);
+};
+
 export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any) {
   const sync = state.sync;
   const [locale] = useLocale();
   const ar = locale === "ar";
   const dir: "rtl" | "ltr" = ar ? "rtl" : "ltr";
 
+  const score = overallScore(result.axisScores);
+  const dnaEntries = Object.entries(result.dna ?? {}) as [string, string][];
+
+  const syncTag =
+    !hasBackend()
+      ? null
+      : sync?.status === "ok"
+      ? { text: t("results.meta.saved"), tone: "brand" as const }
+      : sync?.status === "pending"
+      ? { text: `${t("results.meta.saving")}…`, tone: "muted" as const }
+      : sync?.status === "error"
+      ? { text: t("results.meta.saveFailed"), tone: "danger" as const }
+      : null;
+
   return (
-    <div className="space-y-6">
-      <Card title={t("results.section.sync")}>
-        {!hasBackend() && (
-          <div className="text-sm text-danger">{t("results.sync.notConfigured")}</div>
-        )}
-        {hasBackend() && sync?.status === "pending" && (
-          <div className="text-sm text-ink-muted">{t("results.meta.saving")}…</div>
-        )}
-        {hasBackend() && sync?.status === "ok" && (
-          <div className="text-sm text-brand">
-            {t("results.meta.saved")}{" "}
-            <span className="text-xs text-ink-subtle mono">(id: {sync.assessmentId})</span>
+    <div className="space-y-8">
+      <header>
+        <h1 className="text-3xl font-semibold text-ink">{t("results.report.title")}</h1>
+        <div className="mt-2 text-base text-ink-muted">{state.meta.clientName}</div>
+      </header>
+
+      <div className="flex flex-wrap items-center gap-4 border-y border-border py-3 text-sm">
+        {sync?.assessmentId && (
+          <div className="flex items-center gap-2">
+            <span className="text-ink-muted">{t("results.meta.assessmentId")}:</span>
+            <span className="mono text-ink">{sync.assessmentId}</span>
           </div>
         )}
-        {hasBackend() && sync?.status === "error" && (
-          <div className="space-y-2">
-            <div className="text-sm text-danger" dir="ltr">
-              {t("results.meta.saveFailed")}: {sync.error}
-            </div>
+        <div className="text-ink-muted">
+          {new Date(state.meta.createdAt).toLocaleString(ar ? "ar-SA" : "en-US")}
+        </div>
+        <div className="ms-auto">
+          {syncTag && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs ${
+                syncTag.tone === "brand"
+                  ? "bg-brand/10 text-brand"
+                  : syncTag.tone === "danger"
+                  ? "bg-danger/10 text-danger"
+                  : "bg-surface-alt text-ink-muted"
+              }`}
+            >
+              {syncTag.text}
+            </span>
+          )}
+          {!hasBackend() && (
+            <span className="rounded-full px-3 py-1 text-xs bg-danger/10 text-danger">
+              {t("results.sync.notConfigured")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {sync?.status === "error" && (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="text-sm text-danger" dir="ltr">{sync.error}</div>
             <Button variant="secondary" size="sm" onClick={onRetrySync}>
               {t("results.actions.retry")}
             </Button>
           </div>
-        )}
-        {hasBackend() && !sync && (
-          <Button variant="secondary" size="sm" onClick={onRetrySync}>
-            {t("results.sync.syncNow")}
-          </Button>
-        )}
-      </Card>
+        </Card>
+      )}
 
-      <Card title={t("results.section.summary")}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-ink">
-          <div>
-            <span className="text-ink-muted">{t("results.summary.client")}:</span>{" "}
-            {state.meta.clientName}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <div className="mono text-5xl font-semibold text-ink">
+            {score ?? "—"}
+            <span className="text-xl text-ink-subtle"> / 100</span>
           </div>
-          <div>
-            <span className="text-ink-muted">{t("results.summary.assessor")}:</span>{" "}
-            {state.meta.assessorName}
-          </div>
-          <div>
-            <span className="text-ink-muted">{t("results.summary.date")}:</span>{" "}
-            {new Date(state.meta.createdAt).toLocaleString(ar ? "ar-SA" : "en-US")}
-          </div>
-          <div>
-            <span className="text-ink-muted">{t("results.summary.roles")}:</span>{" "}
-            {state.respondents.map((r: any) => roleLabel(r.role)).join(ar ? "، " : ", ")}
-          </div>
-        </div>
-      </Card>
+          <div className="mt-2 text-sm text-ink-muted">{t("results.hero.score")}</div>
+        </Card>
 
-      <Card title={t("results.section.dna")}>
-        <ul className="space-y-2 text-sm">
-          {Object.entries(result.dna).map(([k, v]: any) => (
-            <li key={k} className="rounded-[2px] border border-border bg-surface-alt p-3">
-              <div className="text-xs text-ink-subtle">{k}</div>
-              <div className="font-semibold text-ink">{v}</div>
-            </li>
-          ))}
-        </ul>
-      </Card>
+        <Card title={t("results.section.dna")}>
+          <ul className="space-y-2 text-sm">
+            {dnaEntries.map(([k, v]) => (
+              <li key={k}>
+                <div className="text-xs text-ink-subtle mono">{k}</div>
+                <div className="font-medium text-ink" dir={dir}>{pickLocale(v, ar)}</div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+
+      {result.roiEstimate && (
+        <section>
+          <h2 className="mb-3 text-xl font-semibold text-ink">{t("results.section.roi")}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Stat
+              value={`${result.roiEstimate.weeklyCostSavedSar} SAR`}
+              label={t("results.roi.weekly")}
+              emphasis
+            />
+            <Stat
+              value={String(result.roiEstimate.weeklyHoursSaved)}
+              label={t("results.roi.weeklyHours", { n: result.roiEstimate.weeklyHoursSaved })}
+            />
+          </div>
+          <ul className="mt-3 list-disc ps-5 space-y-1 text-xs text-ink-muted" dir={dir}>
+            {(ar ? result.roiEstimate.notesAr : result.roiEstimate.notesEn).map(
+              (n: string, i: number) => <li key={i}>{n}</li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      {!result.roiEstimate && (
+        <Card title={t("results.section.roi")}>
+          <div className="text-sm text-ink-muted">{t("results.roi.empty")}</div>
+        </Card>
+      )}
 
       <Card title={t("results.section.axisScores")}>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -84,8 +147,8 @@ export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any
         </div>
       </Card>
 
-      <Card title={t("results.section.painSignals")}>
-        {result.painSignals.length ? (
+      {result.painSignals.length > 0 && (
+        <Card title={t("results.section.painSignals")}>
           <ul className="space-y-2 text-sm">
             {result.painSignals.map((p: any) => (
               <li key={p.key} className="rounded-[2px] border border-border bg-surface-alt p-3">
@@ -94,72 +157,53 @@ export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any
               </li>
             ))}
           </ul>
-        ) : (
-          <div className="text-sm text-ink-muted">{t("results.painSignals.empty")}</div>
-        )}
-      </Card>
+        </Card>
+      )}
 
-      <Card title={t("results.section.quickWins")}>
-        <div className="space-y-2">
-          {result.quickWins.map((w: any, i: number) => (
-            <div key={i} className="rounded-[2px] border border-border bg-surface-alt p-3" dir={dir}>
-              <div className="font-semibold text-ink">{ar ? w.titleAr : w.titleEn}</div>
-              <div className="text-xs text-ink-muted mt-1">{ar ? w.whyAr : w.whyEn}</div>
-              <div className="text-xs text-brand mt-2">
-                {t("results.impact")}: {ar ? w.impactAr : w.impactEn}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
+      {result.quickWins.length > 0 && (
+        <Card title={t("results.section.quickWins")}>
+          <ol className="space-y-3 list-decimal ps-5">
+            {result.quickWins.map((w: any, i: number) => (
+              <li key={i} dir={dir}>
+                <div className="font-medium text-ink">{ar ? w.titleAr : w.titleEn}</div>
+                <div className="text-xs text-ink-muted mt-1">{ar ? w.whyAr : w.whyEn}</div>
+                <div className="text-xs text-brand mt-1">
+                  {t("results.impact")}: {ar ? w.impactAr : w.impactEn}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
 
-      <Card title={t("results.section.aiOpportunities")}>
-        <div className="space-y-2">
-          {result.aiOpportunities.map((a: any, i: number) => (
-            <div key={i} className="rounded-[2px] border border-border bg-surface-alt p-3" dir={dir}>
-              <div className="font-semibold text-ink">{ar ? a.titleAr : a.titleEn}</div>
-              <div className="text-xs text-ink-muted mt-1">{ar ? a.whyAr : a.whyEn}</div>
-              <div className="text-xs text-brand mt-2">
-                {t("results.impact")}: {ar ? a.impactAr : a.impactEn}
-              </div>
-            </div>
-          ))}
-          {!result.aiOpportunities.length && (
-            <div className="text-sm text-ink-muted">{t("results.aiOpportunities.empty")}</div>
-          )}
-        </div>
-      </Card>
+      {result.aiOpportunities.length > 0 && (
+        <Card title={t("results.section.aiOpportunities")}>
+          <ol className="space-y-3 list-decimal ps-5">
+            {result.aiOpportunities.map((a: any, i: number) => (
+              <li key={i} dir={dir}>
+                <div className="font-medium text-ink">{ar ? a.titleAr : a.titleEn}</div>
+                <div className="text-xs text-ink-muted mt-1">{ar ? a.whyAr : a.whyEn}</div>
+                <div className="text-xs text-brand mt-1">
+                  {t("results.impact")}: {ar ? a.impactAr : a.impactEn}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
 
-      <Card title={t("results.section.roi")}>
-        {result.roiEstimate ? (
-          <div className="text-sm space-y-3">
-            <div className="rounded-[2px] border border-border bg-surface-alt p-3">
-              <div className="text-ink-subtle text-xs">{t("results.roi.weekly")}</div>
-              <div className="text-2xl font-semibold mono text-ink mt-1">
-                {result.roiEstimate.weeklyCostSavedSar} SAR/week
-              </div>
-              <div className="text-xs text-ink-muted mt-1">
-                {t("results.roi.weeklyHours", { n: result.roiEstimate.weeklyHoursSaved })}
-              </div>
-            </div>
-            <ul className="list-disc ps-5 space-y-1 text-xs text-ink-muted" dir={dir}>
-              {(ar ? result.roiEstimate.notesAr : result.roiEstimate.notesEn).map(
-                (n: string, i: number) => <li key={i}>{n}</li>
-              )}
-            </ul>
-          </div>
-        ) : (
-          <div className="text-sm text-ink-muted">{t("results.roi.empty")}</div>
-        )}
-      </Card>
+      {!result.aiOpportunities.length && (
+        <Card title={t("results.section.aiOpportunities")}>
+          <div className="text-sm text-ink-muted">{t("results.aiOpportunities.empty")}</div>
+        </Card>
+      )}
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" className="flex-1" onClick={onBack}>
-          {t("header.back")}
+      <footer className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
+        <Button variant="primary" onClick={onExportPdf}>
+          {t("results.actions.exportPdf")}
         </Button>
         <Button
           variant="secondary"
-          className="flex-1"
           onClick={() => {
             const blob = new Blob([JSON.stringify({ state, result }, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -172,10 +216,10 @@ export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any
         >
           {t("results.actions.exportJson")}
         </Button>
-        <Button variant="primary" className="flex-1" onClick={onExportPdf}>
-          {t("results.actions.exportPdf")}
+        <Button variant="ghost" onClick={onBack}>
+          {t("header.back")}
         </Button>
-      </div>
+      </footer>
     </div>
   );
 }

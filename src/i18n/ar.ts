@@ -69,6 +69,10 @@ export const ar = {
   "results.actions.retry": "إعادة المحاولة",
 
   "start.field.contactEmail.invalid": "صيغة بريد إلكتروني غير صحيحة",
+  "start.field.contactPhone": "رقم الهاتف",
+  "start.field.contactPhone.invalid": "رقم هاتف غير صحيح (8 أرقام على الأقل)",
+  "start.field.commercialRegistration": "السجل التجاري",
+  "start.field.commercialRegistration.hint": "اختياري — يُستخدم لتمييز المنشأة",
 
   "settings.title": "إعدادات ROI",
   "settings.subtitle": "هذه الإعدادات تؤثر على ROI التقديري فقط، ولا تغيّر الدرجات.",
