@@ -1,81 +1,173 @@
-import { Card, Field, Select, roleLabel, countAnswers } from "../pageHelpers";
-import { Role } from "../types";
+import { PageHeader } from "../ui/PageHeader";
+import { Card } from "../ui/Card";
+import { Field } from "../ui/Field";
+import { Button } from "../ui/Button";
+import { t } from "../i18n/t";
+import type { AssessmentState, Role } from "../types";
 
-const ROLES: { key: Role; labelAr: string; labelEn: string }[] = [
-  { key: "Manager", labelAr: "مدير", labelEn: "Manager" },
-  { key: "Engineer", labelAr: "مهندس موقع", labelEn: "Site Engineer" },
-  { key: "Finance", labelAr: "محاسب/مالي", labelEn: "Finance" },
-  { key: "Operations", labelAr: "تشغيل/مستندات", labelEn: "Operations/Docs" },
-];
+const ALL_ROLES: Role[] = ["Manager", "Engineer", "Finance", "Operations"];
 
-export function Start({
-  state, onMeta, onAddRole, onRemoveRole, onSwitchRole, onStart
-}: any) {
+const SIZE_OPTIONS = ["lt50", "50to200", "gt200"] as const;
+
+interface Props {
+  state: AssessmentState;
+  onMeta: (patch: Partial<AssessmentState["meta"]>) => void;
+  onAddRole: (role: Role) => void;
+  onRemoveRole: (id: string) => void;
+  onSwitchRole: (id: string) => void;
+  onStart: () => void;
+}
+
+export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props) {
+  const { meta, respondents } = state;
+
+  const usedRoles = respondents.map((r) => r.role);
+  const availableRoles = ALL_ROLES.filter((r) => !usedRoles.includes(r));
+
+  const canStart =
+    !!meta.clientName &&
+    !!meta.assessorName &&
+    !!meta.companySize &&
+    respondents.length > 0;
+
   return (
-    <div className="space-y-4">
-      <Card title="بيانات التقييم • Assessment Info">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Field label="اسم العميل • Client" value={state.meta.clientName} onChange={(v: string) => onMeta({ clientName: v })} placeholder="شركة..." />
-          <Field label="اسم المشروع • Project (optional)" value={state.meta.projectName ?? ""} onChange={(v: string) => onMeta({ projectName: v })} placeholder="مشروع..." />
-          <Select
-            label="حجم الشركة • Company size"
-            value={state.meta.companySize}
-            onChange={(v: string) => onMeta({ companySize: v })}
-            options={[
-              { value: "lt50", label: "أقل من 50 | <50" },
-              { value: "50to200", label: "50–200" },
-              { value: "gt200", label: "أكثر من 200 | 200+" },
-            ]}
+    <div className="space-y-10">
+      <PageHeader title={t("start.title")} subtitle={t("start.subtitle")} />
+
+      {/* Company Card */}
+      <Card title={t("start.section.company")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field
+            label={t("start.field.clientName")}
+            value={meta.clientName}
+            onChange={(e) => onMeta({ clientName: e.target.value })}
+            placeholder="…"
           />
-          <Field label="اسم المقيم • Assessor" value={state.meta.assessorName} onChange={(v: string) => onMeta({ assessorName: v })} placeholder="أحمد..." />
+          <Field label={t("start.field.companySize")}>
+            <select
+              value={meta.companySize}
+              onChange={(e) => onMeta({ companySize: e.target.value as AssessmentState["meta"]["companySize"] })}
+              className="h-10 rounded-[2px] border border-border bg-surface px-3 text-base text-ink focus:border-brand focus:outline-none"
+            >
+              {SIZE_OPTIONS.map((v) => (
+                <option key={v} value={v}>
+                  {t(`start.size.${v}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field
+            label={t("start.field.city")}
+            value={meta.city ?? ""}
+            onChange={(e) => onMeta({ city: e.target.value })}
+            placeholder="…"
+          />
         </div>
       </Card>
 
-      <Card title="حزمة مقابلات (أدوار متعددة) • Multi-role bundle">
-        <div className="grid grid-cols-1 gap-2">
-          {state.respondents.map((r: any) => (
-            <div key={r.id} className="rounded-2xl border border-slate-800 p-3 flex items-center justify-between">
-              <button className="text-sm font-semibold hover:text-sky-300" onClick={() => onSwitchRole(r.id)}>
-                {roleLabel(r.role)} <span className="text-xs text-slate-400">({countAnswers(r.answers)} answers)</span>
-              </button>
-              {state.respondents.length > 1 && (
-                <button className="text-xs rounded-xl border border-slate-700 px-2 py-1 hover:bg-slate-900" onClick={() => onRemoveRole(r.id)}>
-                  إزالة
-                </button>
+      {/* Assessor Card */}
+      <Card title={t("start.section.assessor")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field
+            label={t("start.field.assessorName")}
+            value={meta.assessorName}
+            onChange={(e) => onMeta({ assessorName: e.target.value })}
+            placeholder="…"
+          />
+          <Field
+            label={t("start.field.contactEmail")}
+            type="email"
+            value={meta.contactEmail ?? ""}
+            onChange={(e) => onMeta({ contactEmail: e.target.value })}
+            placeholder="…"
+          />
+        </div>
+      </Card>
+
+      {/* Respondents Card */}
+      <Card title={t("start.section.respondents")}>
+        {/* Current respondent pills */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {respondents.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center gap-2 rounded-[2px] border border-border bg-surface-alt px-3 py-1.5"
+            >
+              <span className="text-sm font-medium text-ink">
+                {t(`start.role.${r.role}`)}
+              </span>
+              {respondents.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-1 py-0 text-xs text-ink-subtle"
+                  onClick={() => onRemoveRole(r.id)}
+                >
+                  {t("start.respondent.remove")}
+                </Button>
               )}
             </div>
           ))}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-          {ROLES.map(r => (
-            <button
-              key={r.key}
-              className="rounded-2xl border border-slate-800 px-3 py-3 text-sm hover:bg-slate-900/60"
-              onClick={() => onAddRole(r.key)}
-            >
-              + {r.labelAr}
-              <div className="text-[11px] text-slate-400 mt-1">{r.labelEn}</div>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-3 text-xs text-slate-400">
-          نصيحة: اعمل مقابلة واحدة لكل دور (مدير/مهندس/مالي/تشغيل) داخل نفس العميل، ثم استخرج تقرير واحد موحد.
-        </div>
+        {/* Add role area */}
+        {availableRoles.length > 0 && (
+          <AddRoleArea availableRoles={availableRoles} onAddRole={onAddRole} />
+        )}
       </Card>
 
-      <button
-        className="w-full rounded-2xl bg-sky-400 text-slate-950 font-semibold py-3 hover:brightness-95 disabled:opacity-50"
+      {/* Primary CTA */}
+      <Button
+        variant="primary"
+        className="w-full"
+        disabled={!canStart}
         onClick={onStart}
-        disabled={!state.meta.clientName || !state.meta.assessorName}
       >
-        بدء الاستبيان • Start Survey
-      </button>
-
-      <div className="text-xs text-slate-500">
-        MVP للـ 10 عملاء الأوائل: تشخيص + Quick Wins + فرص AI + ROI تقديري.
-      </div>
+        {t("start.begin")}
+      </Button>
     </div>
+  );
+}
+
+function AddRoleArea({
+  availableRoles,
+  onAddRole,
+}: {
+  availableRoles: Role[];
+  onAddRole: (role: Role) => void;
+}) {
+  if (availableRoles.length === 1) {
+    return (
+      <Button variant="secondary" size="sm" onClick={() => onAddRole(availableRoles[0])}>
+        + {t("start.respondent.add")} — {t(`start.role.${availableRoles[0]}`)}
+      </Button>
+    );
+  }
+
+  return (
+    <Field label={t("start.respondent.add")}>
+      <div className="flex gap-2">
+        <select
+          id="add-role-select"
+          className="h-10 flex-1 rounded-[2px] border border-border bg-surface px-3 text-base text-ink focus:border-brand focus:outline-none"
+          defaultValue=""
+          onChange={(e) => {
+            if (e.target.value) {
+              onAddRole(e.target.value as Role);
+              e.target.value = "";
+            }
+          }}
+        >
+          <option value="" disabled>
+            —
+          </option>
+          {availableRoles.map((r) => (
+            <option key={r} value={r}>
+              {t(`start.role.${r}`)}
+            </option>
+          ))}
+        </select>
+      </div>
+    </Field>
   );
 }
