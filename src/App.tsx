@@ -8,6 +8,7 @@ import { Start } from "./pages/Start";
 import { Survey } from "./pages/Survey";
 import { Results, exportPdf } from "./pages/Results";
 import { Settings } from "./pages/Settings";
+import { AppHeader } from "./ui/AppHeader";
 
 type Step = "start" | "survey" | "result" | "settings";
 
@@ -113,7 +114,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Header
+      <AppHeader
         onReset={reset}
         onSettings={() => setStep("settings")}
         canGoBack={step !== "start"}
@@ -184,40 +185,6 @@ function defaultState(): AssessmentState {
       avgHourCostSar: null
     }
   };
-}
-
-function Header({
-  onReset, onSettings
-}: { onReset: () => void; onSettings: () => void; canGoBack: boolean; onBack: () => void }) {
-  return (
-    <div className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-      <div className="mx-auto max-w-3xl p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-slate-900 flex items-center justify-center">
-            <span className="text-sky-300 font-bold">IA</span>
-          </div>
-          <div>
-            <div className="font-semibold">InfraAI Field Assessment</div>
-            <div className="text-xs text-slate-400">Bundle (Multi-role) • PWA • Offline cache</div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button
-            className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
-            onClick={onSettings}
-          >
-            ROI Settings
-          </button>
-          <button
-            className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
-            onClick={onReset}
-          >
-            New
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function Footer({ step }: { step: string }) {
