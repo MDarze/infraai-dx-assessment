@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { Card, QuestionRenderer, axisLabel, roleLabel } from "../pageHelpers";
+import { t } from "../i18n/t";
+import { useLocale } from "../i18n/useLocale";
 
 export function Survey({
   questions, answers, respondent, respondents, onSwitchRespondent, onAnswer, onBack, onDone,
 }: any) {
   const [idx, setIdx] = useState(0);
+  const [locale] = useLocale();
   const q = questions[idx];
 
   const next = () => setIdx((i: number) => Math.min(i + 1, questions.length - 1));
   const prev = () => setIdx((i: number) => Math.max(i - 1, 0));
 
+  const questionText = locale === "en" && q.textEn ? q.textEn : q.text;
+  const helpText = locale === "en" && q.helpEn ? q.helpEn : q.help;
+
   return (
     <div className="space-y-4">
-      <Card title="الدور الحالي • Current role">
+      <Card title={t("survey.role.section")}>
         <div className="flex flex-wrap gap-2">
           {respondents.map((r: any) => (
             <button
@@ -26,20 +32,16 @@ export function Survey({
             </button>
           ))}
         </div>
-        <div className="mt-2 text-xs text-slate-400">يمكنك التبديل بين الأدوار لإكمال نفس تقييم العميل.</div>
+        <div className="mt-2 text-xs text-slate-400">{t("survey.role.helper")}</div>
       </Card>
 
-      <Card title={`سؤال ${idx + 1} / ${questions.length}`}>
+      <Card title={t("survey.meta.count", { n: idx + 1, total: questions.length })}>
         <div className="text-sm text-slate-400 mb-2">{axisLabel(q.axis)}</div>
 
-        <div className="text-lg font-semibold mb-1">{q.text}</div>
-        {q.textEn && <div className="text-sm text-slate-300 mb-1" dir="ltr">{q.textEn}</div>}
+        <div className="text-lg font-semibold mb-1">{questionText}</div>
 
-        {(q.help || q.helpEn) && (
-          <div className="text-xs text-slate-400 mb-3">
-            {q.help}
-            {q.helpEn && <div dir="ltr">{q.helpEn}</div>}
-          </div>
+        {helpText && (
+          <div className="text-xs text-slate-400 mb-3">{helpText}</div>
         )}
 
         <QuestionRenderer q={q} value={answers[q.id]} onChange={(v: any) => onAnswer(q.id, v)} />
@@ -47,18 +49,18 @@ export function Survey({
 
       <div className="flex gap-2">
         <button className="flex-1 rounded-2xl border border-slate-800 py-3 hover:bg-slate-900" onClick={onBack}>
-          رجوع • Back
+          {t("header.back")}
         </button>
         <button className="flex-1 rounded-2xl border border-slate-800 py-3 hover:bg-slate-900" onClick={prev} disabled={idx === 0}>
-          السابق • Prev
+          {t("survey.previous")}
         </button>
         {idx < questions.length - 1 ? (
           <button className="flex-1 rounded-2xl bg-sky-400 text-slate-950 font-semibold py-3 hover:brightness-95" onClick={next}>
-            التالي • Next
+            {t("survey.next")}
           </button>
         ) : (
           <button className="flex-1 rounded-2xl bg-emerald-400 text-slate-950 font-semibold py-3 hover:brightness-95" onClick={onDone}>
-            تحليل النتائج • Analyze
+            {t("survey.analyze")}
           </button>
         )}
       </div>

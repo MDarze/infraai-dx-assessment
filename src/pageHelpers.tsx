@@ -4,6 +4,8 @@
  * They will be replaced by proper primitives in later phases.
  */
 import React from "react";
+import { t } from "./i18n/t";
+import { useLocale } from "./i18n/useLocale";
 
 export function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -59,6 +61,9 @@ export function Select({ label, value, onChange, options }: any) {
 }
 
 export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; onChange: (v: any) => void }) {
+  const [locale] = useLocale();
+  const optionLabel = (o: any) => (locale === "en" && o.labelEn ? o.labelEn : o.label);
+
   if (q.type === "single") {
     return (
       <div className="space-y-2">
@@ -70,10 +75,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
               checked={value === o.key}
               onChange={() => onChange(o.key)}
             />
-            <span className="text-sm">
-              {o.label}
-              {o.labelEn && <span className="text-xs text-slate-400 block" dir="ltr">{o.labelEn}</span>}
-            </span>
+            <span className="text-sm">{optionLabel(o)}</span>
           </label>
         ))}
       </div>
@@ -95,10 +97,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
               checked={arr.includes(o.key)}
               onChange={() => toggle(o.key)}
             />
-            <span className="text-sm">
-              {o.label}
-              {o.labelEn && <span className="text-xs text-slate-400 block" dir="ltr">{o.labelEn}</span>}
-            </span>
+            <span className="text-sm">{optionLabel(o)}</span>
           </label>
         ))}
       </div>
@@ -123,33 +122,30 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
       className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400 min-h-[120px]"
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="اكتب هنا..."
+      placeholder={t("survey.note.input.placeholder")}
     />
   );
 }
 
+const AXIS_KEYS = [
+  "Process", "DailyOps", "Data", "Finance",
+  "Governance", "Decision", "Automation", "AIReadiness",
+] as const;
+type AxisKey = typeof AXIS_KEYS[number];
+
 export function axisLabel(axis: string) {
-  const m: Record<string, string> = {
-    Process: "العملية/سير العمل • Process",
-    DailyOps: "التشغيل اليومي • Daily Ops",
-    Data: "رحلة البيانات • Data Flow",
-    Finance: "الرؤية المالية • Finance",
-    Governance: "الامتثال/الحكومة • Governance",
-    Decision: "اتخاذ القرار والمخاطر • Decision",
-    Automation: "الأتمتة • Automation",
-    AIReadiness: "جاهزية AI • AI Readiness",
-  };
-  return m[axis] ?? axis;
+  return (AXIS_KEYS as readonly string[]).includes(axis)
+    ? t(`axis.${axis as AxisKey}` as any)
+    : axis;
 }
 
+const ROLE_KEYS = ["Manager", "Engineer", "Finance", "Operations"] as const;
+type RoleKey = typeof ROLE_KEYS[number];
+
 export function roleLabel(role: string) {
-  const m: Record<string, string> = {
-    Manager: "مدير",
-    Engineer: "مهندس موقع",
-    Finance: "محاسب/مالي",
-    Operations: "تشغيل/مستندات",
-  };
-  return m[role] ?? role;
+  return (ROLE_KEYS as readonly string[]).includes(role)
+    ? t(`start.role.${role as RoleKey}` as any)
+    : role;
 }
 
 export function roleLabelEn(role: string) {
