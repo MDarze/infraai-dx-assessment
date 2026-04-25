@@ -68,7 +68,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
     return (
       <div className="space-y-2">
         {q.options?.map((o: any) => (
-          <label key={o.key} className="flex items-center gap-3 rounded-2xl border border-slate-800 p-3 hover:bg-slate-900/60 cursor-pointer">
+          <label key={o.key} className="flex items-center gap-3 rounded-[2px] border border-border bg-surface p-3 hover:bg-surface-alt cursor-pointer">
             <input
               type="radio"
               name={q.id}
@@ -91,7 +91,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
     return (
       <div className="space-y-2">
         {q.options?.map((o: any) => (
-          <label key={o.key} className="flex items-center gap-3 rounded-2xl border border-slate-800 p-3 hover:bg-slate-900/60 cursor-pointer">
+          <label key={o.key} className="flex items-center gap-3 rounded-[2px] border border-border bg-surface p-3 hover:bg-surface-alt cursor-pointer">
             <input
               type="checkbox"
               checked={arr.includes(o.key)}
@@ -107,7 +107,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
   if (q.type === "number") {
     return (
       <input
-        className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400"
+        className="w-full rounded-[2px] border border-border bg-surface text-ink p-3 outline-none focus:border-brand"
         type="number"
         step="0.1"
         value={value ?? ""}
@@ -119,7 +119,7 @@ export function QuestionRenderer({ q, value, onChange }: { q: any; value: any; o
 
   return (
     <textarea
-      className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-3 outline-none focus:border-sky-400 min-h-[120px]"
+      className="w-full rounded-[2px] border border-border bg-surface text-ink p-3 outline-none focus:border-brand min-h-[120px]"
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value)}
       placeholder={t("survey.note.input.placeholder")}

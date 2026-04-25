@@ -189,10 +189,10 @@ function defaultState(): AssessmentState {
 
 function Footer({ step }: { step: string }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950/90 backdrop-blur">
-      <div className="mx-auto max-w-3xl px-4 py-3 text-xs text-slate-400 flex justify-between">
-        <span>InfraAI • Field Assessment MVP (Bundle)</span>
-        <span>Step: {step}</span>
+    <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-bg/90 backdrop-blur">
+      <div className="mx-auto max-w-3xl px-4 py-3 text-xs text-ink-subtle flex justify-between">
+        <span>InfraAI · Field Assessment</span>
+        <span className="mono">{step}</span>
       </div>
     </div>
   );

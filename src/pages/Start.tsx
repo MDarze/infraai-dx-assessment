@@ -9,6 +9,9 @@ const ALL_ROLES: Role[] = ["Manager", "Engineer", "Finance", "Operations"];
 
 const SIZE_OPTIONS = ["lt50", "50to200", "gt200"] as const;
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmailValid = (s: string | undefined) => !s || EMAIL_RE.test(s);
+
 interface Props {
   state: AssessmentState;
   onMeta: (patch: Partial<AssessmentState["meta"]>) => void;
@@ -24,17 +27,19 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
   const usedRoles = respondents.map((r) => r.role);
   const availableRoles = ALL_ROLES.filter((r) => !usedRoles.includes(r));
 
+  const emailOk = isEmailValid(meta.contactEmail);
+
   const canStart =
     !!meta.clientName &&
     !!meta.assessorName &&
     !!meta.companySize &&
+    emailOk &&
     respondents.length > 0;
 
   return (
     <div className="space-y-10">
       <PageHeader title={t("start.title")} subtitle={t("start.subtitle")} />
 
-      {/* Company Card */}
       <Card title={t("start.section.company")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field
@@ -65,7 +70,6 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
         </div>
       </Card>
 
-      {/* Assessor Card */}
       <Card title={t("start.section.assessor")}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field
@@ -80,13 +84,12 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
             value={meta.contactEmail ?? ""}
             onChange={(e) => onMeta({ contactEmail: e.target.value })}
             placeholder="…"
+            error={!emailOk ? t("start.field.contactEmail.invalid") : undefined}
           />
         </div>
       </Card>
 
-      {/* Respondents Card */}
       <Card title={t("start.section.respondents")}>
-        {/* Current respondent pills */}
         <div className="flex flex-wrap gap-2 mb-4">
           {respondents.map((r) => (
             <div
@@ -110,13 +113,11 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
           ))}
         </div>
 
-        {/* Add role area */}
         {availableRoles.length > 0 && (
           <AddRoleArea availableRoles={availableRoles} onAddRole={onAddRole} />
         )}
       </Card>
 
-      {/* Primary CTA */}
       <Button
         variant="primary"
         className="w-full"

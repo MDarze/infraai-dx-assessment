@@ -1,166 +1,165 @@
-import { Card, axisLabel, roleLabel, roleLabelEn } from "../pageHelpers";
+import { Card } from "../ui/Card";
+import { Button } from "../ui/Button";
+import { Stat } from "../ui/Stat";
+import { axisLabel, roleLabel, roleLabelEn } from "../pageHelpers";
 import { hasBackend } from "../api";
+import { t } from "../i18n/t";
+import { useLocale } from "../i18n/useLocale";
 
 export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any) {
   const sync = state.sync;
+  const [locale] = useLocale();
+  const ar = locale === "ar";
+  const dir: "rtl" | "ltr" = ar ? "rtl" : "ltr";
+
   return (
-    <div className="space-y-4">
-      {!hasBackend() && (
-        <Card title="حفظ في قاعدة البيانات • Database sync">
-          <div className="text-sm text-amber-300">
-            Backend not configured — VITE_API_URL was empty at build time.
-            Set it in your Railway frontend service variables and trigger a fresh build.
+    <div className="space-y-6">
+      <Card title={t("results.section.sync")}>
+        {!hasBackend() && (
+          <div className="text-sm text-danger">{t("results.sync.notConfigured")}</div>
+        )}
+        {hasBackend() && sync?.status === "pending" && (
+          <div className="text-sm text-ink-muted">{t("results.meta.saving")}…</div>
+        )}
+        {hasBackend() && sync?.status === "ok" && (
+          <div className="text-sm text-brand">
+            {t("results.meta.saved")}{" "}
+            <span className="text-xs text-ink-subtle mono">(id: {sync.assessmentId})</span>
           </div>
-        </Card>
-      )}
-
-      {hasBackend() && (
-        <Card title="حفظ في قاعدة البيانات • Database sync">
-          {sync?.status === "pending" && (
-            <div className="text-sm text-slate-300">... جاري الحفظ • Saving</div>
-          )}
-          {sync?.status === "ok" && (
-            <div className="text-sm text-emerald-300">
-              تم الحفظ • Saved <span className="text-xs text-slate-400" dir="ltr">(id: {sync.assessmentId})</span>
+        )}
+        {hasBackend() && sync?.status === "error" && (
+          <div className="space-y-2">
+            <div className="text-sm text-danger" dir="ltr">
+              {t("results.meta.saveFailed")}: {sync.error}
             </div>
-          )}
-          {sync?.status === "error" && (
-            <div className="space-y-2">
-              <div className="text-sm text-rose-300" dir="ltr">Save failed: {sync.error}</div>
-              <button
-                className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
-                onClick={onRetrySync}
-              >
-                إعادة المحاولة • Retry
-              </button>
-            </div>
-          )}
-          {!sync && (
-            <button
-              className="text-xs rounded-xl border border-slate-700 px-3 py-2 hover:bg-slate-900"
-              onClick={onRetrySync}
-            >
-              حفظ الآن • Sync now
-            </button>
-          )}
-        </Card>
-      )}
+            <Button variant="secondary" size="sm" onClick={onRetrySync}>
+              {t("results.actions.retry")}
+            </Button>
+          </div>
+        )}
+        {hasBackend() && !sync && (
+          <Button variant="secondary" size="sm" onClick={onRetrySync}>
+            {t("results.sync.syncNow")}
+          </Button>
+        )}
+      </Card>
 
-      <Card title="ملخص العميل • Client Summary">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-          <div><span className="text-slate-400">العميل:</span> {state.meta.clientName}</div>
-          <div><span className="text-slate-400">المقيم:</span> {state.meta.assessorName}</div>
-          <div><span className="text-slate-400">التاريخ:</span> {new Date(state.meta.createdAt).toLocaleString("ar-SA")}</div>
-          <div><span className="text-slate-400">الأدوار:</span> {state.respondents.map((r: any) => roleLabel(r.role)).join("، ")}</div>
+      <Card title={t("results.section.summary")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-ink">
+          <div>
+            <span className="text-ink-muted">{t("results.summary.client")}:</span>{" "}
+            {state.meta.clientName}
+          </div>
+          <div>
+            <span className="text-ink-muted">{t("results.summary.assessor")}:</span>{" "}
+            {state.meta.assessorName}
+          </div>
+          <div>
+            <span className="text-ink-muted">{t("results.summary.date")}:</span>{" "}
+            {new Date(state.meta.createdAt).toLocaleString(ar ? "ar-SA" : "en-US")}
+          </div>
+          <div>
+            <span className="text-ink-muted">{t("results.summary.roles")}:</span>{" "}
+            {state.respondents.map((r: any) => roleLabel(r.role)).join(ar ? "، " : ", ")}
+          </div>
         </div>
       </Card>
 
-      <Card title="Operating DNA (Bilingual)">
+      <Card title={t("results.section.dna")}>
         <ul className="space-y-2 text-sm">
           {Object.entries(result.dna).map(([k, v]: any) => (
-            <li key={k} className="rounded-xl border border-slate-800 p-3">
-              <div className="text-xs text-slate-400">{k}</div>
-              <div className="font-semibold">{v}</div>
+            <li key={k} className="rounded-[2px] border border-border bg-surface-alt p-3">
+              <div className="text-xs text-ink-subtle">{k}</div>
+              <div className="font-semibold text-ink">{v}</div>
             </li>
           ))}
         </ul>
       </Card>
 
-      <Card title="درجات المحاور • Axis scores (1–5)">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <Card title={t("results.section.axisScores")}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Object.entries(result.axisScores).map(([k, v]: any) => (
-            <div key={k} className="rounded-2xl border border-slate-800 p-3">
-              <div className="text-xs text-slate-400">{axisLabel(k)}</div>
-              <div className="text-2xl font-semibold">{Number(v).toFixed(2)}</div>
-            </div>
+            <Stat key={k} value={Number(v).toFixed(2)} label={axisLabel(k)} />
           ))}
-        </div>
-        <div className="mt-3 text-xs text-slate-400">
-          Breakdown by role موجود داخل PDF.
         </div>
       </Card>
 
-      <Card title="إشارات ألم رقمية • Numeric pain signals">
+      <Card title={t("results.section.painSignals")}>
         {result.painSignals.length ? (
           <ul className="space-y-2 text-sm">
             {result.painSignals.map((p: any) => (
-              <li key={p.key} className="rounded-xl border border-slate-800 p-3">
-                <div className="text-slate-200">{p.labelAr}</div>
-                <div className="text-slate-400 text-xs" dir="ltr">{p.labelEn}</div>
-                <div className="font-semibold mt-1">{p.value}</div>
+              <li key={p.key} className="rounded-[2px] border border-border bg-surface-alt p-3">
+                <div className="text-ink" dir={dir}>{ar ? p.labelAr : p.labelEn}</div>
+                <div className="font-semibold mt-1 mono text-ink">{p.value}</div>
               </li>
             ))}
           </ul>
         ) : (
-          <div className="text-sm text-slate-400">أدخل (ساعات يومية + تكلفة الساعة) لتحصل على ROI تقديري.</div>
+          <div className="text-sm text-ink-muted">{t("results.painSignals.empty")}</div>
         )}
       </Card>
 
-      <Card title="Top Quick Wins (60 يوم)">
+      <Card title={t("results.section.quickWins")}>
         <div className="space-y-2">
           {result.quickWins.map((w: any, i: number) => (
-            <div key={i} className="rounded-2xl border border-slate-800 p-3">
-              <div className="font-semibold">{w.titleAr}</div>
-              <div className="text-xs text-slate-400 mt-1">{w.whyAr}</div>
-              <div className="text-xs text-sky-300 mt-2">Impact: {w.impactAr}</div>
-              <div className="mt-2 border-t border-slate-800 pt-2" dir="ltr">
-                <div className="font-semibold">{w.titleEn}</div>
-                <div className="text-xs text-slate-400 mt-1">{w.whyEn}</div>
-                <div className="text-xs text-sky-300 mt-2">Impact: {w.impactEn}</div>
+            <div key={i} className="rounded-[2px] border border-border bg-surface-alt p-3" dir={dir}>
+              <div className="font-semibold text-ink">{ar ? w.titleAr : w.titleEn}</div>
+              <div className="text-xs text-ink-muted mt-1">{ar ? w.whyAr : w.whyEn}</div>
+              <div className="text-xs text-brand mt-2">
+                {t("results.impact")}: {ar ? w.impactAr : w.impactEn}
               </div>
             </div>
           ))}
         </div>
       </Card>
 
-      <Card title="AI Opportunities">
+      <Card title={t("results.section.aiOpportunities")}>
         <div className="space-y-2">
           {result.aiOpportunities.map((a: any, i: number) => (
-            <div key={i} className="rounded-2xl border border-slate-800 p-3">
-              <div className="font-semibold">{a.titleAr}</div>
-              <div className="text-xs text-slate-400 mt-1">{a.whyAr}</div>
-              <div className="text-xs text-emerald-300 mt-2">Impact: {a.impactAr}</div>
-              <div className="mt-2 border-t border-slate-800 pt-2" dir="ltr">
-                <div className="font-semibold">{a.titleEn}</div>
-                <div className="text-xs text-slate-400 mt-1">{a.whyEn}</div>
-                <div className="text-xs text-emerald-300 mt-2">Impact: {a.impactEn}</div>
+            <div key={i} className="rounded-[2px] border border-border bg-surface-alt p-3" dir={dir}>
+              <div className="font-semibold text-ink">{ar ? a.titleAr : a.titleEn}</div>
+              <div className="text-xs text-ink-muted mt-1">{ar ? a.whyAr : a.whyEn}</div>
+              <div className="text-xs text-brand mt-2">
+                {t("results.impact")}: {ar ? a.impactAr : a.impactEn}
               </div>
             </div>
           ))}
           {!result.aiOpportunities.length && (
-            <div className="text-sm text-slate-400">فرص AI غير مفعّلة (الجاهزية/البيانات قد تكون غير كافية).</div>
+            <div className="text-sm text-ink-muted">{t("results.aiOpportunities.empty")}</div>
           )}
         </div>
       </Card>
 
-      <Card title="ROI تقديري • ROI estimate">
+      <Card title={t("results.section.roi")}>
         {result.roiEstimate ? (
-          <div className="text-sm space-y-2">
-            <div className="rounded-xl border border-slate-800 p-3">
-              <div className="text-slate-400 text-xs">توفير أسبوعي تقديري • Estimated weekly saving</div>
-              <div className="text-2xl font-semibold">{result.roiEstimate.weeklyCostSavedSar} SAR/week</div>
-              <div className="text-xs text-slate-400 mt-1">({result.roiEstimate.weeklyHoursSaved} hours/week)</div>
+          <div className="text-sm space-y-3">
+            <div className="rounded-[2px] border border-border bg-surface-alt p-3">
+              <div className="text-ink-subtle text-xs">{t("results.roi.weekly")}</div>
+              <div className="text-2xl font-semibold mono text-ink mt-1">
+                {result.roiEstimate.weeklyCostSavedSar} SAR/week
+              </div>
+              <div className="text-xs text-ink-muted mt-1">
+                {t("results.roi.weeklyHours", { n: result.roiEstimate.weeklyHoursSaved })}
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-400">
-              <ul className="list-disc pr-5 space-y-1">
-                {result.roiEstimate.notesAr.map((n: string, i: number) => <li key={i}>{n}</li>)}
-              </ul>
-              <ul className="list-disc pl-5 space-y-1" dir="ltr">
-                {result.roiEstimate.notesEn.map((n: string, i: number) => <li key={i}>{n}</li>)}
-              </ul>
-            </div>
+            <ul className="list-disc ps-5 space-y-1 text-xs text-ink-muted" dir={dir}>
+              {(ar ? result.roiEstimate.notesAr : result.roiEstimate.notesEn).map(
+                (n: string, i: number) => <li key={i}>{n}</li>
+              )}
+            </ul>
           </div>
         ) : (
-          <div className="text-sm text-slate-400">أدخل القيم الرقمية لتحصل على ROI تقديري.</div>
+          <div className="text-sm text-ink-muted">{t("results.roi.empty")}</div>
         )}
       </Card>
 
-      <div className="flex gap-2">
-        <button className="flex-1 rounded-2xl border border-slate-800 py-3 hover:bg-slate-900" onClick={onBack}>
-          رجوع • Back
-        </button>
-        <button
-          className="flex-1 rounded-2xl border border-slate-800 py-3 hover:bg-slate-900"
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" className="flex-1" onClick={onBack}>
+          {t("header.back")}
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex-1"
           onClick={() => {
             const blob = new Blob([JSON.stringify({ state, result }, null, 2)], { type: "application/json" });
             const url = URL.createObjectURL(blob);
@@ -171,14 +170,11 @@ export function Results({ state, result, onBack, onExportPdf, onRetrySync }: any
             URL.revokeObjectURL(url);
           }}
         >
-          Export JSON
-        </button>
-        <button
-          className="flex-1 rounded-2xl bg-amber-300 text-slate-950 font-semibold py-3 hover:brightness-95"
-          onClick={onExportPdf}
-        >
-          Export PDF
-        </button>
+          {t("results.actions.exportJson")}
+        </Button>
+        <Button variant="primary" className="flex-1" onClick={onExportPdf}>
+          {t("results.actions.exportPdf")}
+        </Button>
       </div>
     </div>
   );

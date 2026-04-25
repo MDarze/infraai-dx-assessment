@@ -28,8 +28,8 @@ export async function syncToBackend(state: {
       city: state.meta.city || "N/A",
       contactName: state.meta.assessorName,
       contactEmail: state.meta.contactEmail || `field.${Date.now()}@infraai.local`,
-      contactPhone: "0000000000",
-      emirateRegistration: "N/A",
+      contactPhone: `0000${Date.now().toString().slice(-7)}`,
+      emirateRegistration: `PENDING-${Date.now()}`,
       industry: "Construction",
     }),
   });

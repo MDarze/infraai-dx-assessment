@@ -1,40 +1,50 @@
-import { Card, NumberField } from "../pageHelpers";
+import { Card } from "../ui/Card";
+import { Field } from "../ui/Field";
+import { Button } from "../ui/Button";
+import { t } from "../i18n/t";
 
 export function Settings({ state, onROI, onBack }: any) {
   return (
-    <div className="space-y-4">
-      <Card title="إعدادات ROI (للتحليل) • ROI Settings">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <NumberField
-            label="عدد المهندسين (للحساب) • Engineers count"
+    <div className="space-y-6">
+      <Card title={t("settings.title")}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field
+            label={t("settings.engineersCount")}
+            type="number"
             value={state.roi.engineersCount}
-            onChange={(v: number) => onROI({ engineersCount: v })}
+            onChange={(e) => onROI({ engineersCount: Number(e.target.value) })}
           />
-          <NumberField
-            label="أيام العمل/أسبوع • Working days/week"
+          <Field
+            label={t("settings.workingDays")}
+            type="number"
             value={state.roi.workingDaysPerWeek}
-            onChange={(v: number) => onROI({ workingDaysPerWeek: v })}
+            onChange={(e) => onROI({ workingDaysPerWeek: Number(e.target.value) })}
           />
-          <NumberField
-            label="نسبة التوفير المتوقعة (0–90%) • Saving rate"
+          <Field
+            label={t("settings.savingRate")}
+            type="number"
             value={Math.round(state.roi.timeSavingRate * 100)}
-            onChange={(v: number) => onROI({ timeSavingRate: Math.max(0, Math.min(0.9, v / 100)) })}
+            onChange={(e) =>
+              onROI({ timeSavingRate: Math.max(0, Math.min(0.9, Number(e.target.value) / 100)) })
+            }
           />
-          <NumberField
-            label="تكلفة ساعة ثابتة (اختياري) • Fixed hourly cost (optional)"
+          <Field
+            label={t("settings.hourlyCost")}
+            type="number"
             value={state.roi.avgHourCostSar ?? 0}
-            onChange={(v: number) => onROI({ avgHourCostSar: v <= 0 ? null : v })}
-            help="لو 0 سيتم أخذها من إجابة المحاسب (إن وجدت)."
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              onROI({ avgHourCostSar: v <= 0 ? null : v });
+            }}
+            hint={t("settings.hourlyCost.help")}
           />
         </div>
-        <div className="mt-3 text-xs text-slate-400">
-          هذه الإعدادات تؤثر على ROI التقديري فقط، ولا تغيّر الدرجات.
-        </div>
+        <div className="mt-4 text-xs text-ink-subtle">{t("settings.subtitle")}</div>
       </Card>
 
-      <button className="w-full rounded-2xl border border-slate-800 py-3 hover:bg-slate-900" onClick={onBack}>
-        رجوع • Back
-      </button>
+      <Button variant="secondary" className="w-full" onClick={onBack}>
+        {t("header.back")}
+      </Button>
     </div>
   );
 }
