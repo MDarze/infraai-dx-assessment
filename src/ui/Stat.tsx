@@ -2,10 +2,11 @@
 interface Props {
   value: string;
   label: string;
+  hint?: string;
   emphasis?: boolean;
 }
 
-export function Stat({ value, label, emphasis = false }: Props) {
+export function Stat({ value, label, hint, emphasis = false }: Props) {
   return (
     <div className="rounded-[2px] border border-border bg-surface p-4">
       <div
@@ -14,6 +15,7 @@ export function Stat({ value, label, emphasis = false }: Props) {
         {value}
       </div>
       <div className="mt-1 text-xs text-ink-muted">{label}</div>
+      {hint && <div className="mt-1 text-[10px] text-ink-subtle mono">{hint}</div>}
     </div>
   );
 }

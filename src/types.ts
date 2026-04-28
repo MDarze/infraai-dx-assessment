@@ -1,42 +1,83 @@
-export type Role = "Manager" | "Engineer" | "Finance" | "Operations";
+export type Sector = "INFRA" | "HEALTH" | "REAL" | "GOV";
 
-export type Axis =
-  | "Process"
-  | "DailyOps"
-  | "Data"
-  | "Finance"
-  | "Governance"
-  | "Decision"
-  | "Automation"
-  | "AIReadiness";
+export const SECTORS: Sector[] = ["INFRA", "HEALTH", "REAL", "GOV"];
 
-export type QuestionType = "single" | "multi" | "number" | "text";
+export type Dimension =
+  | "operations"
+  | "project_workflow"
+  | "site_management"
+  | "finance"
+  | "executive_management"
+  | "reporting"
+  | "gov_compliance";
+
+export const DIMENSIONS: Dimension[] = [
+  "operations",
+  "project_workflow",
+  "site_management",
+  "finance",
+  "executive_management",
+  "reporting",
+  "gov_compliance",
+];
+
+export type QuestionType = "mcq" | "yn_conditional" | "open";
+
+export interface BilingualText {
+  en: string;
+  ar: string;
+}
 
 export interface OptionDef {
-  key: string;
-  label: string;
-  labelEn?: string;
-  score?: number;
+  key: "A" | "B" | "C" | "D";
+  en: string;
+  ar: string;
+  score: number;
+}
+
+export interface FollowUpDef {
+  id: string;
+  type: "mcq";
+  label_en: string;
+  label_ar: string;
+  options: OptionDef[];
 }
 
 export interface QuestionDef {
   id: string;
-  axis: Axis;
-  role: Role | "All";
+  dimension: Dimension;
+  sectors: (Sector | "ALL")[];
   type: QuestionType;
-  text: string;
-  textEn?: string;
-  help?: string;
-  helpEn?: string;
-  weight?: number;
+  label_en: string;
+  label_ar: string;
   options?: OptionDef[];
-  scoringMap?: Record<string, number>;
-  tags?: string[];
+  yes_score?: number;
+  no_score?: number;
+  conditional_if?: "yes" | "no";
+  follow_up?: FollowUpDef;
+  scoring_rubric?: Record<string, string>;
+}
+
+export interface DimensionMeta {
+  key: Dimension;
+  label_en: string;
+  label_ar: string;
+  weight: number;
+}
+
+export interface QuestionBank {
+  meta: {
+    version: string;
+    sectors: Sector[];
+  };
+  dimensions: DimensionMeta[];
+  questions: QuestionDef[];
 }
 
 export interface AssessmentMeta {
   clientName: string;
   projectName?: string;
+  sector: Sector;
   companySize: "lt50" | "50to200" | "gt200";
   assessorName: string;
   contactEmail?: string;
@@ -51,16 +92,14 @@ export interface ROISettings {
   workingDaysPerWeek: number;
   timeSavingRate: number;
   avgHourCostSar: number | null;
+  dailyReportingHours: number;
 }
 
-export type AnswerValue = string | number | string[] | null;
-
-export interface Respondent {
-  id: string;
-  role: Role;
-  name?: string;
-  answers: Record<string, AnswerValue>;
-}
+/** MCQ: option key "A"|"B"|"C"|"D". yn_conditional: { answer: "yes"|"no", followUp?: "A"|"B"|"C"|"D" }. open: free text. */
+export type AnswerValue =
+  | string
+  | null
+  | { answer: "yes" | "no"; followUp?: string | null };
 
 export type SyncStatus = "idle" | "pending" | "ok" | "error";
 
@@ -73,8 +112,7 @@ export interface SyncInfo {
 
 export interface AssessmentState {
   meta: AssessmentMeta;
-  respondents: Respondent[];
-  activeRespondentId: string;
+  answers: Record<string, AnswerValue>;
   roi: ROISettings;
   sync?: SyncInfo;
 }

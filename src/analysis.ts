@@ -1,6 +1,19 @@
-import { Axis, AssessmentState, QuestionDef, AnswerValue, Role } from "./types";
+import { AssessmentState, AnswerValue, Dimension, QuestionDef } from "./types";
+import { DIMENSIONS } from "./types";
+import { questionBank } from "./questionBank";
 
-export type AxisScores = Record<Axis, number>;
+/** Score per dimension on 0–100 scale (per spec) and 0–5 normalized for radar parity. */
+export type DimensionScore = {
+  raw: number;          // 0–3 weighted average of answered questions
+  pct: number;          // 0–100 (raw / 3 * 100)
+  normalized: number;   // 0–5 for radar
+  stage: "Initial" | "Developing" | "Defined" | "Optimized";
+  answered: number;
+  total: number;
+};
+
+export type DimensionScores = Record<Dimension, DimensionScore>;
+
 export type DNAProfile = {
   DecisionDNA: string;
   DataDNA: string;
@@ -9,246 +22,298 @@ export type DNAProfile = {
 };
 
 export type AnalysisResult = {
-  axisScores: AxisScores;
-  axisScoresByRole: Record<Role, AxisScores>;
+  dimensionScores: DimensionScores;
+  overallPct: number;          // 0–100 weighted by dimension weights
+  overallStage: DimensionScore["stage"];
+  overallNormalized: number;   // 0–5
   dna: DNAProfile;
-  painSignals: { key: string; labelAr: string; labelEn: string; value: string }[];
-  quickWins: { titleAr: string; titleEn: string; whyAr: string; whyEn: string; impactAr: string; impactEn: string }[];
-  aiOpportunities: { titleAr: string; titleEn: string; whyAr: string; whyEn: string; impactAr: string; impactEn: string }[];
-  roiEstimate?: { weeklyHoursSaved: number; weeklyCostSavedSar: number; notesAr: string[]; notesEn: string[] };
+  qualitativeNotes: { id: string; labelAr: string; labelEn: string; value: string }[];
+  quickWins: QuickWin[];
+  aiOpportunities: QuickWin[];
+  roiEstimate?: ROIEstimate;
 };
 
-const AXES: Axis[] = ["Process","DailyOps","Data","Finance","Governance","Decision","Automation","AIReadiness"];
+export type QuickWin = {
+  titleAr: string;
+  titleEn: string;
+  whyAr: string;
+  whyEn: string;
+  impactAr: string;
+  impactEn: string;
+};
 
-export function analyze(questions: QuestionDef[], state: AssessmentState): AnalysisResult {
-  const qById = new Map(questions.map(q => [q.id, q]));
+export type ROIEstimate = {
+  weeklyHoursSaved: number;
+  weeklyCostSavedSar: number;
+  notesAr: string[];
+  notesEn: string[];
+};
 
-  const scoreOne = (answers: Record<string, AnswerValue>) => {
-    const axisTotals: Record<string, { sum: number; w: number }> = {};
-    AXES.forEach(a => axisTotals[a] = { sum: 0, w: 0 });
+const DNA_DIMENSION_MAP: Record<keyof DNAProfile, Dimension> = {
+  DecisionDNA: "executive_management",
+  DataDNA: "reporting",
+  FinancialDNA: "finance",
+  GovernanceDNA: "gov_compliance",
+};
 
-    const scoreAnswer = (q: QuestionDef, v: AnswerValue): number | null => {
-      if (v == null) return null;
-      if (q.type === "number" || q.type === "text") return null;
+function stageFor(pct: number): DimensionScore["stage"] {
+  if (pct < 25) return "Initial";
+  if (pct < 50) return "Developing";
+  if (pct < 75) return "Defined";
+  return "Optimized";
+}
 
-      const optScore = (key: string) => q.options?.find(o => o.key === key)?.score;
+function scoreAnswer(q: QuestionDef, v: AnswerValue): number | null {
+  if (v == null) return null;
 
-      if (q.type === "single") {
-        const key = String(v);
-        const s = optScore(key) ?? q.scoringMap?.[key];
-        return typeof s === "number" ? s : null;
-      }
+  if (q.type === "mcq") {
+    const key = String(v);
+    const opt = q.options?.find((o) => o.key === key);
+    return opt ? opt.score : null;
+  }
 
-      if (q.type === "multi") {
-        const arr = Array.isArray(v) ? v : [];
-        const scores = arr
-          .map(k => optScore(String(k)) ?? q.scoringMap?.[String(k)])
-          .filter((x): x is number => typeof x === "number");
-        if (!scores.length) return null;
-        return scores.reduce((a,b)=>a+b,0) / scores.length;
-      }
+  if (q.type === "yn_conditional") {
+    if (typeof v !== "object" || v === null || !("answer" in v)) return null;
+    const base = v.answer === "yes" ? q.yes_score : q.no_score;
+    if (base == null) return null;
+    if (
+      q.follow_up &&
+      v.followUp &&
+      q.conditional_if &&
+      v.answer === q.conditional_if
+    ) {
+      const opt = q.follow_up.options.find((o) => o.key === v.followUp);
+      if (opt) return (base + opt.score) / 2;
+    }
+    return base;
+  }
 
-      return null;
+  // open: assessor scores manually — not auto-scored
+  return null;
+}
+
+export function analyze(state: AssessmentState): AnalysisResult {
+  const sector = state.meta.sector;
+  const questions = questionBank.questions.filter(
+    (q) => q.sectors.includes("ALL") || q.sectors.includes(sector),
+  );
+
+  const byDim: Record<Dimension, { sum: number; count: number; total: number }> = {} as any;
+  for (const d of DIMENSIONS) byDim[d] = { sum: 0, count: 0, total: 0 };
+
+  for (const q of questions) {
+    if (q.type !== "open") byDim[q.dimension].total += 1;
+    const ans = state.answers[q.id];
+    const s = scoreAnswer(q, ans);
+    if (s != null) {
+      byDim[q.dimension].sum += s;
+      byDim[q.dimension].count += 1;
+    }
+  }
+
+  const dimensionScores = {} as DimensionScores;
+  for (const d of DIMENSIONS) {
+    const { sum, count, total } = byDim[d];
+    const raw = count ? sum / count : 0;
+    const pct = round((raw / 3) * 100, 1);
+    dimensionScores[d] = {
+      raw: round(raw, 2),
+      pct,
+      normalized: round((raw / 3) * 5, 2),
+      stage: stageFor(pct),
+      answered: count,
+      total,
     };
-
-    for (const [qid, ans] of Object.entries(answers)) {
-      const q = qById.get(qid);
-      if (!q) continue;
-      const s = scoreAnswer(q, ans);
-      if (typeof s === "number") {
-        const w = q.weight ?? 1;
-        axisTotals[q.axis].sum += s * w;
-        axisTotals[q.axis].w += w;
-      }
-    }
-
-    const axisScores = {} as AxisScores;
-    for (const a of AXES) {
-      axisScores[a] = axisTotals[a].w ? round(axisTotals[a].sum / axisTotals[a].w, 2) : 0;
-    }
-    return axisScores;
-  };
-
-  // per-role scoring
-  const axisScoresByRole = {} as Record<Role, AxisScores>;
-  const roles = ["Manager","Engineer","Finance","Operations"] as Role[];
-  for (const r of roles) {
-    const resp = state.respondents.find(x => x.role === r);
-    axisScoresByRole[r] = resp ? scoreOne(resp.answers) : emptyScores();
   }
 
-  // aggregate: average across roles that have non-zero scores
-  const axisScores = emptyScores();
-  for (const a of AXES) {
-    const vals = roles
-      .map(r => axisScoresByRole[r][a])
-      .filter(v => v > 0);
-    axisScores[a] = vals.length ? round(vals.reduce((x,y)=>x+y,0) / vals.length, 2) : 0;
+  // Overall = weighted by dimension weights from the bank
+  let weightedSum = 0;
+  let weightTotal = 0;
+  for (const meta of questionBank.dimensions) {
+    const ds = dimensionScores[meta.key];
+    if (ds.answered > 0) {
+      weightedSum += ds.pct * meta.weight;
+      weightTotal += meta.weight;
+    }
+  }
+  const overallPct = weightTotal ? round(weightedSum / weightTotal, 1) : 0;
+  const overallNormalized = round((overallPct / 100) * 5, 2);
+
+  const dna = computeDna(dimensionScores);
+
+  // Qualitative open-text answers
+  const qualitativeNotes: AnalysisResult["qualitativeNotes"] = [];
+  for (const q of questions) {
+    if (q.type !== "open") continue;
+    const v = state.answers[q.id];
+    if (typeof v === "string" && v.trim()) {
+      qualitativeNotes.push({
+        id: q.id,
+        labelAr: q.label_ar,
+        labelEn: q.label_en,
+        value: v.trim(),
+      });
+    }
   }
 
-  const dna: DNAProfile = {
-    DecisionDNA: axisScores.Decision < 3 ? "Reactive | تفاعلي" : "Data-Driven | مبني على بيانات",
-    DataDNA: axisScores.Data < 3 ? "Fragmented | متشظي" : "Unified | موحّد",
-    FinancialDNA: axisScores.Finance < 3 ? "Delayed Visibility | رؤية متأخرة" : "High Visibility | رؤية جيدة",
-    GovernanceDNA: axisScores.Governance < 3 ? "High Risk | مخاطر عالية" : "Controlled | مُدار"
+  const quickWins = buildQuickWins(dimensionScores);
+  const aiOpportunities = buildAiOpportunities(dimensionScores);
+  const roiEstimate = buildRoi(state);
+
+  return {
+    dimensionScores,
+    overallPct,
+    overallStage: stageFor(overallPct),
+    overallNormalized,
+    dna,
+    qualitativeNotes,
+    quickWins,
+    aiOpportunities,
+    roiEstimate,
   };
+}
 
-  // Pain signals (use Engineer + Finance numeric inputs)
-  const painSignals: AnalysisResult["painSignals"] = [];
-  const engineer = state.respondents.find(r => r.role === "Engineer");
-  const finance = state.respondents.find(r => r.role === "Finance");
-
-  const dailyHours = num(engineer?.answers["B3_report_time_hours"]);
-  if (dailyHours != null) painSignals.push({
-    key: "daily_report_hours",
-    labelAr: "ساعات يومية (تقارير/تجميع/تحديثات) لمهندس الموقع",
-    labelEn: "Daily hours (reporting/collecting updates) for site engineer",
-    value: `${dailyHours} h/day`
-  });
-
-  const costHourFromAnswer = num(finance?.answers["D4_cost_hour_sar"]);
-  const costHour = state.roi.avgHourCostSar ?? costHourFromAnswer ?? null;
-  if (costHour != null) painSignals.push({
-    key: "hour_cost",
-    labelAr: "تكلفة ساعة العمل (تقديري)",
-    labelEn: "Hourly cost (estimate)",
-    value: `${costHour} SAR/hour`
-  });
-
-  // Rules helpers
-  const getAny = (qid: string) => {
-    for (const r of state.respondents) {
-      if (qid in r.answers) return r.answers[qid];
-    }
-    return null;
+function computeDna(s: DimensionScores): DNAProfile {
+  const at = (k: keyof DNAProfile) => s[DNA_DIMENSION_MAP[k]].pct;
+  return {
+    DecisionDNA: at("DecisionDNA") < 50
+      ? "Reactive | تفاعلي"
+      : "Data-Driven | مبني على بيانات",
+    DataDNA: at("DataDNA") < 50
+      ? "Fragmented | متشظي"
+      : "Unified | موحّد",
+    FinancialDNA: at("FinancialDNA") < 50
+      ? "Delayed Visibility | رؤية متأخرة"
+      : "High Visibility | رؤية جيدة",
+    GovernanceDNA: at("GovernanceDNA") < 50
+      ? "High Risk | مخاطر عالية"
+      : "Controlled | مُدار",
   };
+}
 
-  const usesWhatsApp = getAny("B1_daily_updates") === "whatsapp" || getAny("C1_data_path") === "whatsapp_excel";
-  const duplicateHigh = getAny("B2_duplicate_entry") === "5plus";
-  const financialLate = axisScores.Finance > 0 && axisScores.Finance < 3;
-  const governanceRisk = axisScores.Governance > 0 && axisScores.Governance < 3;
-  const decisionLate = axisScores.Decision > 0 && axisScores.Decision < 3;
-
-  const quickWins: AnalysisResult["quickWins"] = [];
-  const aiOpportunities: AnalysisResult["aiOpportunities"] = [];
-
-  if (usesWhatsApp || duplicateHigh || axisScores.Data < 3) {
-    quickWins.push({
+function buildQuickWins(s: DimensionScores): QuickWin[] {
+  const wins: QuickWin[] = [];
+  if (s.reporting.pct > 0 && s.reporting.pct < 50) {
+    wins.push({
       titleAr: "قالب تقرير يومي موحّد + سجل مركزي بدل واتس/ملفات متعددة",
-      titleEn: "Standard daily report + central log (replace WhatsApp/file chaos)",
-      whyAr: "تقليل فوضى النسخ وتضارب البيانات + تسريع الوصول للمعلومة.",
+      titleEn: "Standard daily report + central log",
+      whyAr: "تقليل فوضى النسخ وتضارب البيانات وتسريع الوصول للمعلومة.",
       whyEn: "Reduce duplicate copies/data conflicts and speed up visibility.",
       impactAr: "خفض وقت التجميع وإعادة الإدخال خلال 2–3 أسابيع.",
-      impactEn: "Reduce collection & re-entry time within 2–3 weeks."
+      impactEn: "Reduce collection & re-entry time within 2–3 weeks.",
     });
   }
-  if (financialLate) {
-    quickWins.push({
+  if (s.finance.pct > 0 && s.finance.pct < 50) {
+    wins.push({
       titleAr: "Dashboard بسيط: تقدم التنفيذ مقابل المصروفات (Cost vs Progress)",
       titleEn: "Simple dashboard: Cost vs Progress",
       whyAr: "الانحراف المالي يظهر متأخرًا؛ الربط يكتشفه مبكرًا.",
       whyEn: "Variance is detected late; linking makes it early.",
       impactAr: "تقليل Overrun وتحسين التنبؤ بالمصروفات.",
-      impactEn: "Reduce overruns and improve forecasting."
+      impactEn: "Reduce overruns and improve forecasting.",
     });
   }
-  if (governanceRisk) {
-    quickWins.push({
+  if (s.gov_compliance.pct > 0 && s.gov_compliance.pct < 50) {
+    wins.push({
       titleAr: "مستودع مستندات موحّد + Checklist امتثال للجهات الحكومية/العميل",
       titleEn: "Document hub + compliance checklist",
       whyAr: "تقليل زمن تجميع المستندات وتقليل مخاطر النقص أثناء التدقيق.",
       whyEn: "Speed up document compilation and reduce audit gaps.",
-      impactAr: "تقليل زمن تجهيز المستندات + تقليل مخاطر الغرامات/التأخير.",
-      impactEn: "Faster document readiness + lower penalties/delay risk."
+      impactAr: "تقليل زمن تجهيز المستندات وتقليل مخاطر الغرامات/التأخير.",
+      impactEn: "Faster document readiness + lower penalties/delay risk.",
     });
   }
-  if (decisionLate) {
-    quickWins.push({
+  if (s.executive_management.pct > 0 && s.executive_management.pct < 50) {
+    wins.push({
       titleAr: "لوحة مؤشرات أسبوعية ثابتة + قواعد إنذار مبكر",
       titleEn: "Weekly KPI board + early warning rules",
       whyAr: "تأخر القرار غالبًا نتيجة نقص/تأخر البيانات.",
       whyEn: "Decision delay often comes from late/incomplete data.",
       impactAr: "قرارات أسرع (1–2 يوم بدل 3+).",
-      impactEn: "Faster decisions (1–2 days instead of 3+)."
+      impactEn: "Faster decisions (1–2 days instead of 3+).",
     });
   }
+  if (s.site_management.pct > 0 && s.site_management.pct < 50) {
+    wins.push({
+      titleAr: "تطبيق موبايل ميداني للتحديثات اليومية والصور",
+      titleEn: "Field mobile app for daily updates and photos",
+      whyAr: "تحويل التحديثات الورقية/الواتس لبيانات منظمة.",
+      whyEn: "Convert paper/WhatsApp updates into structured data.",
+      impactAr: "تقليل ازدواج الإدخال وتسريع رؤية الموقع.",
+      impactEn: "Cut duplicate entry and accelerate site visibility.",
+    });
+  }
+  return wins;
+}
 
-  // AI readiness rule
-  const aiReady = axisScores.AIReadiness >= 3 && axisScores.Data >= 2;
-  if (aiReady && dailyHours != null && dailyHours >= 2) {
-    aiOpportunities.push({
+function buildAiOpportunities(s: DimensionScores): QuickWin[] {
+  const ops: QuickWin[] = [];
+  const dataReady = s.reporting.pct >= 50 && s.operations.pct >= 50;
+
+  if (dataReady && s.reporting.pct < 75) {
+    ops.push({
       titleAr: "AI تلخيص تلقائي للتقارير اليومية (صور + نقاط + مخاطر)",
-      titleEn: "AI auto-summaries for daily reports (photos + bullets + risks)",
+      titleEn: "AI auto-summaries for daily reports",
       whyAr: "تقليل وقت كتابة/تلخيص التقارير وتوحيد اللغة.",
       whyEn: "Reduce writing/summarization time and standardize language.",
       impactAr: "خفض 30–60% من وقت التقارير حسب كثافة العمل.",
-      impactEn: "Cut reporting time by 30–60% depending on workload."
+      impactEn: "Cut reporting time by 30–60% depending on workload.",
     });
   }
-  if (aiReady && (financialLate || decisionLate)) {
-    aiOpportunities.push({
+  if (dataReady && (s.finance.pct < 75 || s.executive_management.pct < 75)) {
+    ops.push({
       titleAr: "AI تنبيهات استباقية (توقع تأخير/اختناق قبل حدوثه)",
-      titleEn: "AI predictive alerts (delay/bottleneck before it happens)",
+      titleEn: "AI predictive alerts (delay/bottleneck prediction)",
       whyAr: "تحويل القرار من تفاعلي إلى وقائي.",
       whyEn: "Shift from reactive to preventive decisions.",
       impactAr: "تقليل التأخير والمفاجآت التشغيلية.",
-      impactEn: "Reduce delays and operational surprises."
+      impactEn: "Reduce delays and operational surprises.",
     });
   }
-  if (aiReady && governanceRisk) {
-    aiOpportunities.push({
+  if (dataReady && s.gov_compliance.pct < 75) {
+    ops.push({
       titleAr: "AI تدقيق مستندات الامتثال (اكتمال/تعارض/نقص)",
-      titleEn: "AI compliance document validation (completeness/conflicts)",
+      titleEn: "AI compliance document validation",
       whyAr: "تقليل وقت المراجعة اليدوية وتقليل المخاطر.",
       whyEn: "Reduce manual review and compliance risk.",
       impactAr: "تسريع ملفات الزكاة/المطالبات وتقليل مخاطر التدقيق.",
-      impactEn: "Faster Zakat/claims files and lower audit risk."
+      impactEn: "Faster Zakat/claims files and lower audit risk.",
     });
   }
-
-  // ROI estimate based on settings (and available inputs)
-  let roiEstimate: AnalysisResult["roiEstimate"] = undefined;
-  if (dailyHours != null && costHour != null) {
-    const engineers = Math.max(1, state.roi.engineersCount);
-    const days = clamp(state.roi.workingDaysPerWeek, 1, 7);
-    const rate = clamp(state.roi.timeSavingRate, 0, 0.9);
-
-    const weeklyHoursLost = dailyHours * days * engineers;
-    const weeklyHoursSaved = weeklyHoursLost * rate;
-    const weeklyCostSavedSar = weeklyHoursSaved * costHour;
-
-    roiEstimate = {
-      weeklyHoursSaved: round(weeklyHoursSaved, 1),
-      weeklyCostSavedSar: round(weeklyCostSavedSar, 0),
-      notesAr: [
-        `افتراض: عدد المهندسين = ${engineers} | أيام العمل/أسبوع = ${days} | نسبة التوفير = ${(rate*100).toFixed(0)}%`,
-        "هذا تقدير أولي (MVP) قابل للتحسين بعد جمع بيانات أكثر."
-      ],
-      notesEn: [
-        `Assumptions: Engineers = ${engineers} | Days/week = ${days} | Saving rate = ${(rate*100).toFixed(0)}%`,
-        "This is an early MVP estimate; refine after more data."
-      ]
-    };
-  }
-
-  return { axisScores, axisScoresByRole, dna, painSignals, quickWins, aiOpportunities, roiEstimate };
+  return ops;
 }
 
-function num(v: any): number | null {
-  if (v == null || v === "") return null;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
+function buildRoi(state: AssessmentState): ROIEstimate | undefined {
+  const { engineersCount, workingDaysPerWeek, timeSavingRate, avgHourCostSar, dailyReportingHours } =
+    state.roi;
+
+  if (!dailyReportingHours || !avgHourCostSar) return undefined;
+
+  const engineers = Math.max(1, engineersCount);
+  const days = clamp(workingDaysPerWeek, 1, 7);
+  const rate = clamp(timeSavingRate, 0, 0.9);
+
+  const weeklyHoursLost = dailyReportingHours * days * engineers;
+  const weeklyHoursSaved = weeklyHoursLost * rate;
+  const weeklyCostSavedSar = weeklyHoursSaved * avgHourCostSar;
+
+  return {
+    weeklyHoursSaved: round(weeklyHoursSaved, 1),
+    weeklyCostSavedSar: round(weeklyCostSavedSar, 0),
+    notesAr: [
+      `افتراض: عدد المهندسين = ${engineers} | أيام/أسبوع = ${days} | نسبة التوفير = ${(rate * 100).toFixed(0)}%`,
+      "تقدير أولي قابل للتحسين بعد جمع بيانات أكثر.",
+    ],
+    notesEn: [
+      `Assumptions: Engineers = ${engineers} | Days/week = ${days} | Saving rate = ${(rate * 100).toFixed(0)}%`,
+      "Early estimate; refine after more data.",
+    ],
+  };
 }
 
 function round(n: number, d: number) {
   const p = Math.pow(10, d);
   return Math.round(n * p) / p;
-}
-
-function emptyScores(): AxisScores {
-  return {
-    Process: 0, DailyOps: 0, Data: 0, Finance: 0, Governance: 0, Decision: 0, Automation: 0, AIReadiness: 0
-  };
 }
 
 function clamp(n: number, a: number, b: number) {

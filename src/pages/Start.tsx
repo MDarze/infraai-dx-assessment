@@ -3,9 +3,8 @@ import { Card } from "../ui/Card";
 import { Field } from "../ui/Field";
 import { Button } from "../ui/Button";
 import { t } from "../i18n/t";
-import type { AssessmentState, Role } from "../types";
-
-const ALL_ROLES: Role[] = ["Manager", "Engineer", "Finance", "Operations"];
+import type { AssessmentState, Sector } from "../types";
+import { SECTORS } from "../types";
 
 const SIZE_OPTIONS = ["lt50", "50to200", "gt200"] as const;
 
@@ -22,17 +21,11 @@ const isPhoneValid = (s: string | undefined) => {
 interface Props {
   state: AssessmentState;
   onMeta: (patch: Partial<AssessmentState["meta"]>) => void;
-  onAddRole: (role: Role) => void;
-  onRemoveRole: (id: string) => void;
-  onSwitchRole: (id: string) => void;
   onStart: () => void;
 }
 
-export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props) {
-  const { meta, respondents } = state;
-
-  const usedRoles = respondents.map((r) => r.role);
-  const availableRoles = ALL_ROLES.filter((r) => !usedRoles.includes(r));
+export function Start({ state, onMeta, onStart }: Props) {
+  const { meta } = state;
 
   const emailOk = isEmailValid(meta.contactEmail);
   const phoneOk = isPhoneValid(meta.contactPhone);
@@ -41,9 +34,9 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
     !!meta.clientName &&
     !!meta.assessorName &&
     !!meta.companySize &&
+    !!meta.sector &&
     emailOk &&
-    phoneOk &&
-    respondents.length > 0;
+    phoneOk;
 
   return (
     <div className="space-y-10">
@@ -57,10 +50,25 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
             onChange={(e) => onMeta({ clientName: e.target.value })}
             placeholder="…"
           />
+          <Field label={t("start.field.sector")}>
+            <select
+              value={meta.sector}
+              onChange={(e) => onMeta({ sector: e.target.value as Sector })}
+              className="h-10 rounded-[2px] border border-border bg-surface px-3 text-base text-ink focus:border-brand focus:outline-none"
+            >
+              {SECTORS.map((s) => (
+                <option key={s} value={s}>
+                  {t(`sector.${s}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label={t("start.field.companySize")}>
             <select
               value={meta.companySize}
-              onChange={(e) => onMeta({ companySize: e.target.value as AssessmentState["meta"]["companySize"] })}
+              onChange={(e) =>
+                onMeta({ companySize: e.target.value as AssessmentState["meta"]["companySize"] })
+              }
               className="h-10 rounded-[2px] border border-border bg-surface px-3 text-base text-ink focus:border-brand focus:outline-none"
             >
               {SIZE_OPTIONS.map((v) => (
@@ -113,35 +121,6 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
         </div>
       </Card>
 
-      <Card title={t("start.section.respondents")}>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {respondents.map((r) => (
-            <div
-              key={r.id}
-              className="flex items-center gap-2 rounded-[2px] border border-border bg-surface-alt px-3 py-1.5"
-            >
-              <span className="text-sm font-medium text-ink">
-                {t(`start.role.${r.role}`)}
-              </span>
-              {respondents.length > 1 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-auto px-1 py-0 text-xs text-ink-subtle"
-                  onClick={() => onRemoveRole(r.id)}
-                >
-                  {t("start.respondent.remove")}
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {availableRoles.length > 0 && (
-          <AddRoleArea availableRoles={availableRoles} onAddRole={onAddRole} />
-        )}
-      </Card>
-
       <Button
         variant="primary"
         className="w-full"
@@ -151,48 +130,5 @@ export function Start({ state, onMeta, onAddRole, onRemoveRole, onStart }: Props
         {t("start.begin")}
       </Button>
     </div>
-  );
-}
-
-function AddRoleArea({
-  availableRoles,
-  onAddRole,
-}: {
-  availableRoles: Role[];
-  onAddRole: (role: Role) => void;
-}) {
-  if (availableRoles.length === 1) {
-    return (
-      <Button variant="secondary" size="sm" onClick={() => onAddRole(availableRoles[0])}>
-        + {t("start.respondent.add")} — {t(`start.role.${availableRoles[0]}`)}
-      </Button>
-    );
-  }
-
-  return (
-    <Field label={t("start.respondent.add")}>
-      <div className="flex gap-2">
-        <select
-          id="add-role-select"
-          className="h-10 flex-1 rounded-[2px] border border-border bg-surface px-3 text-base text-ink focus:border-brand focus:outline-none"
-          defaultValue=""
-          onChange={(e) => {
-            if (e.target.value) {
-              onAddRole(e.target.value as Role);
-              e.target.value = "";
-            }
-          }}
-        >
-          <option value="" disabled>
-            —
-          </option>
-          {availableRoles.map((r) => (
-            <option key={r} value={r}>
-              {t(`start.role.${r}`)}
-            </option>
-          ))}
-        </select>
-      </div>
-    </Field>
   );
 }

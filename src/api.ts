@@ -15,8 +15,8 @@ function mapSize(s: string): "<50" | "50-200" | "200+" {
 }
 
 export async function syncToBackend(state: {
-  meta: { clientName: string; companySize: string; assessorName: string; contactEmail?: string; contactPhone?: string; commercialRegistration?: string; city?: string };
-  respondents: Array<{ role: string; answers: Record<string, unknown> }>;
+  meta: { clientName: string; companySize: string; assessorName: string; contactEmail?: string; contactPhone?: string; commercialRegistration?: string; city?: string; sector: string };
+  answers: Record<string, unknown>;
   roi: { engineersCount: number; workingDaysPerWeek: number; timeSavingRate: number; avgHourCostSar: number | null };
 }): Promise<string> {
   const regRes = await fetch(`${BASE}/api/client/register`, {
@@ -30,7 +30,7 @@ export async function syncToBackend(state: {
       contactEmail: state.meta.contactEmail || `field.${Date.now()}@infraai.local`,
       contactPhone: state.meta.contactPhone?.trim() || `0000${Date.now().toString().slice(-7)}`,
       emirateRegistration: state.meta.commercialRegistration?.trim() || `PENDING-${Date.now()}`,
-      industry: "Construction",
+      industry: state.meta.sector,
     }),
   });
   if (!regRes.ok) {
@@ -40,12 +40,12 @@ export async function syncToBackend(state: {
   const regData = await regRes.json() as { data: { assessmentId: string } };
   const assessmentId = regData.data.assessmentId;
 
-  const respondents = state.respondents.map((r) => ({
-    role: r.role,
-    name: r.role,
-    answers: Object.entries(r.answers).map(([questionId, value]) => ({ questionId, value })),
+  const respondents = [{
+    role: "Assessor",
+    name: state.meta.assessorName || "Assessor",
+    answers: Object.entries(state.answers).map(([questionId, value]) => ({ questionId, value })),
     completedAt: new Date().toISOString(),
-  }));
+  }];
 
   const roiSettings = {
     engineersCount: state.roi.engineersCount ?? 3,

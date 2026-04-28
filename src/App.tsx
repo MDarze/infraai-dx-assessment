@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
-import questionsData from "./questions.json";
 import { analyze } from "./analysis";
-import { AssessmentState, QuestionDef, Role, AnswerValue, Respondent } from "./types";
+import { AssessmentState, AnswerValue } from "./types";
+import { getQuestionsForSector } from "./questionBank";
 import { clearState, loadState, saveState } from "./storage";
 import { hasBackend, syncToBackend } from "./api";
 import { Start } from "./pages/Start";
@@ -15,11 +15,8 @@ type Step = "start" | "survey" | "result" | "settings";
 
 export default function App() {
   // Subscribe to locale at the root so the entire tree re-renders on toggle.
-  // Without this, t() calls in pages stay stale until the page re-renders for
-  // some other reason — manifests as "EN toggle doesn't change Start labels".
   useLocale();
 
-  const questions = questionsData as unknown as QuestionDef[];
   const persisted = loadState();
 
   const [step, setStep] = useState<Step>(persisted ? "survey" : "start");
@@ -27,17 +24,15 @@ export default function App() {
     persisted ?? defaultState()
   );
 
-  const activeRespondent = useMemo(() => state.respondents.find(r => r.id === state.activeRespondentId)!, [state]);
-
-  const visibleQuestions = useMemo(() => {
-    const role = activeRespondent.role;
-    return questions.filter(q => q.role === "All" || q.role === role);
-  }, [questions, activeRespondent.role]);
+  const visibleQuestions = useMemo(
+    () => getQuestionsForSector(state.meta.sector),
+    [state.meta.sector],
+  );
 
   const result = useMemo(() => {
     if (step !== "result") return null;
-    return analyze(questions, state);
-  }, [questions, state, step]);
+    return analyze(state);
+  }, [state, step]);
 
   const persist = (next: AssessmentState) => {
     setState(next);
@@ -49,29 +44,7 @@ export default function App() {
   };
 
   const setAnswer = (qid: string, value: AnswerValue) => {
-    const nextRespondents = state.respondents.map(r =>
-      r.id === state.activeRespondentId
-        ? { ...r, answers: { ...r.answers, [qid]: value } }
-        : r
-    );
-    persist({ ...state, respondents: nextRespondents });
-  };
-
-  const switchRespondent = (id: string) => {
-    persist({ ...state, activeRespondentId: id });
-  };
-
-  const addRespondent = (role: Role) => {
-    if (state.respondents.some(r => r.role === role)) return;
-    const r: Respondent = { id: crypto.randomUUID(), role, answers: {} };
-    const next = { ...state, respondents: [...state.respondents, r], activeRespondentId: r.id };
-    persist(next);
-  };
-
-  const removeRespondent = (id: string) => {
-    const nextRespondents = state.respondents.filter(r => r.id !== id);
-    const active = nextRespondents[0]?.id ?? "";
-    persist({ ...state, respondents: nextRespondents, activeRespondentId: active });
+    persist({ ...state, answers: { ...state.answers, [qid]: value } });
   };
 
   const updateROI = (patch: Partial<AssessmentState["roi"]>) => {
@@ -84,7 +57,10 @@ export default function App() {
     setStep("start");
   };
 
-  const syncNow = async (current: AssessmentState, { force = false }: { force?: boolean } = {}) => {
+  const syncNow = async (
+    current: AssessmentState,
+    { force = false }: { force?: boolean } = {},
+  ) => {
     if (!hasBackend()) return;
     if (!force && current.sync?.status === "ok" && current.sync.assessmentId) return;
     const pending: AssessmentState = { ...current, sync: { status: "pending" } };
@@ -99,8 +75,9 @@ export default function App() {
           contactPhone: current.meta.contactPhone,
           commercialRegistration: current.meta.commercialRegistration,
           city: current.meta.city,
+          sector: current.meta.sector,
         },
-        respondents: current.respondents.map(r => ({ role: r.role, answers: r.answers as Record<string, unknown> })),
+        answers: current.answers as Record<string, unknown>,
         roi: {
           engineersCount: current.roi.engineersCount,
           workingDaysPerWeek: current.roi.workingDaysPerWeek,
@@ -108,7 +85,10 @@ export default function App() {
           avgHourCostSar: current.roi.avgHourCostSar,
         },
       });
-      persist({ ...pending, sync: { status: "ok", assessmentId, syncedAt: new Date().toISOString() } });
+      persist({
+        ...pending,
+        sync: { status: "ok", assessmentId, syncedAt: new Date().toISOString() },
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       persist({ ...pending, sync: { status: "error", error: msg } });
@@ -134,9 +114,6 @@ export default function App() {
           <Start
             state={state}
             onMeta={updateMeta}
-            onAddRole={addRespondent}
-            onRemoveRole={removeRespondent}
-            onSwitchRole={switchRespondent}
             onStart={() => setStep("survey")}
           />
         )}
@@ -148,10 +125,7 @@ export default function App() {
         {step === "survey" && (
           <Survey
             questions={visibleQuestions}
-            answers={activeRespondent.answers}
-            respondent={activeRespondent}
-            respondents={state.respondents}
-            onSwitchRespondent={switchRespondent}
+            answers={state.answers}
             onAnswer={setAnswer}
             onBack={() => setStep("start")}
             onDone={finishSurvey}
@@ -175,23 +149,23 @@ export default function App() {
 }
 
 function defaultState(): AssessmentState {
-  const initial: Respondent = { id: crypto.randomUUID(), role: "Engineer", answers: {} };
   return {
     meta: {
       clientName: "",
       projectName: "",
+      sector: "INFRA",
       companySize: "50to200",
       assessorName: "",
       createdAt: new Date().toISOString(),
     },
-    respondents: [initial],
-    activeRespondentId: initial.id,
+    answers: {},
     roi: {
       engineersCount: 3,
       workingDaysPerWeek: 5,
       timeSavingRate: 0.25,
-      avgHourCostSar: null
-    }
+      avgHourCostSar: null,
+      dailyReportingHours: 0,
+    },
   };
 }
 

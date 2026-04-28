@@ -1,6 +1,6 @@
 import { AssessmentState } from "./types";
 
-const KEY = "infraai_assessment_bundle_v2";
+const KEY = "infraai_assessment_bundle_v3";
 
 export function loadState(): AssessmentState | null {
   try {

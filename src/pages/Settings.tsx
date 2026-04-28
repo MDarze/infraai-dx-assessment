@@ -38,6 +38,15 @@ export function Settings({ state, onROI, onBack }: any) {
             }}
             hint={t("settings.hourlyCost.help")}
           />
+          <Field
+            label={t("settings.dailyReportingHours")}
+            type="number"
+            value={state.roi.dailyReportingHours ?? 0}
+            onChange={(e) =>
+              onROI({ dailyReportingHours: Math.max(0, Number(e.target.value)) })
+            }
+            hint={t("settings.dailyReportingHours.help")}
+          />
         </div>
         <div className="mt-4 text-xs text-ink-subtle">{t("settings.subtitle")}</div>
       </Card>
